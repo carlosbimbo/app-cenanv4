@@ -19,10 +19,20 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.bimbo.appcenanv4"
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "3fb1a1ff-dd6d-4f91-80a1-c559d7309beb"
+      }
+    },
+    "owner": "bimbo",
+    "plugins": [
+      "expo-sqlite"
+    ]
   }
 }
