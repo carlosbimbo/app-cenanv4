@@ -4,7 +4,7 @@ import { SQLiteProvider, useSQLiteContext } from 'expo-sqlite';
 import * as Location from 'expo-location';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 import Icon from 'react-native-vector-icons/Ionicons';
 import logo from './images/logogesta.png';
@@ -105,16 +105,46 @@ const LoginScreen = ({navigation}) => {
     const [userName, setUserName] = useState('');
     const [password, setPassword] = useState('');
 
+    const [focusedInput, setFocusedInput] = useState(null); // Estado para rastrear qué TextInput está activo
+    const userEmailRef = useRef(null);
+    const userpasswordRef = useRef(null);
+
+    useEffect(() => {
+      if (userEmailRef.current) {
+        userEmailRef.current.focus();
+        setFocusedInput('userName'); // Aplicar el estilo resaltado
+      }
+    }, []);
+    
     //function to handle login logic
     const handleLogin = async() => {
-        if(userName.length === 0 || password.length === 0) {
+
+        /*if(userName.length === 0 || password.length === 0) {
             Alert.alert('Atencion','Porfavor ingrese el Usuario and Password');
             return;
-        }
+        }*/
+
         try {
+
+          if(userName.trim().length === 0) {
+            Alert.alert('Atencion!', 'Por favor ingrese su Email Registrado.');
+            userEmailRef.current.focus(); // Enfocar automáticamente
+            setFocusedInput('userName'); // Resaltar el campo
+            return;
+            }
+
+            if(password.trim().length === 0) {
+              Alert.alert('Atencion!', 'Por favor ingrese su Password.');
+              userpasswordRef.current.focus(); // Enfocar automáticamente
+              setFocusedInput('password'); // Resaltar el campo
+              return;
+              }  
+
             const user = await db.getFirstAsync('SELECT * FROM users WHERE username = ?', [userName]);
             if (!user) {
                 Alert.alert('Error', 'Usuario no Existe!');
+                userEmailRef.current.focus(); // Enfocar automáticamente
+                setFocusedInput('userName'); // Resaltar el campo
                 return;
             }
             const validUser = await db.getFirstAsync('SELECT * FROM users WHERE username = ? AND password = ?', [userName, password]);
@@ -152,23 +182,39 @@ const LoginScreen = ({navigation}) => {
                 <View style={styles.inputContainer}>
                     <Icon name="mail-outline" size={25} style={styles.icon} />
                     <TextInput
-                        style={styles.input}                        
+                        ref={userEmailRef} // Asignar la referencia         
+                        style={[
+                          styles.input,
+                          focusedInput === 'userName' && styles.inputFocused,
+                        ]}                      
                         placeholder="Email"
                         keyboardType="email-address"
                         value={userName}
                         maxLength={100}
                         onChangeText={setUserName}
+                        onFocus={() => setFocusedInput('userName')}
+                        onBlur={() => setFocusedInput(null)}
+                        returnKeyType="next" // Configura el botón Enter para "siguiente"
+                        onSubmitEditing={() => userpasswordRef.current.focus()} 
                     />
                 </View>
                 <View style={styles.inputContainer}>
                     <Icon name="lock-closed-outline" size={25} style={styles.icon} />
                     <TextInput
-                        style={styles.input}
+                        ref={userpasswordRef} // Asignar la referencia         
+                        style={[
+                          styles.input,
+                          focusedInput === 'password' && styles.inputFocused,
+                        ]}     
                         placeholder="Password"
                         secureTextEntry
                         value={password}
                         maxLength={10}
                         onChangeText={setPassword}
+                        onFocus={() => setFocusedInput('password')}
+                        onBlur={() => setFocusedInput(null)}
+                        returnKeyType="done" // Último campo no necesita ir a otro
+                      onSubmitEditing={handleLogin} // Invoca el registro al terminar
                     />
                 </View>                
                 <Pressable style={styles.button} onPress={handleLogin}>
@@ -229,6 +275,20 @@ const RegisterScreen = ({navigation}) => {
   }, []); // [] asegura que solo se ejecuta al montar el component
     ////////////Fin add aqui gps 08122024
     
+    const [focusedInput, setFocusedInput] = useState(null); // Estado para rastrear qué TextInput está activo
+    const userNombRef = useRef(null);    
+    const dniRef = useRef(null);
+    const emailRef = useRef(null);
+    const passwordRef = useRef(null);
+    const confirpasswordRef = useRef(null);   
+
+    useEffect(() => {
+      if (userNombRef.current) {
+        userNombRef.current.focus();
+        setFocusedInput('userNomb'); // Aplicar el estilo resaltado
+      }
+    }, []);
+
     //function to handle registration logic
     const handleRegister = async() => {
    
@@ -251,17 +311,65 @@ const RegisterScreen = ({navigation}) => {
           }
           */
        
-            if  (userName.length === 0 || password.length === 0 || confirmPassword.length === 0) {
+            /*if  (userName.length === 0 || password.length === 0 || confirmPassword.length === 0) {
                 Alert.alert('Atencion!', 'Por favor ingrese todos los campos.');
                 return;
             }
+            */
+
+            if(userNomb.trim().length === 0) {
+              Alert.alert('Atencion!', 'Por favor ingrese sus Nombres y Apellidos.');
+              userNombRef.current.focus(); // Enfocar automáticamente
+              setFocusedInput('userNomb'); // Resaltar el campo
+              return;
+              }
+
+              if(userDni.trim().length === 0) {
+                Alert.alert('Atencion!', 'Por favor ingrese su DNI.');
+                dniRef.current.focus(); // Enfocar automáticamente
+                setFocusedInput('userDni'); // Resaltar el campo
+                return;
+                }  
+
+            if(userDni.trim().length < 8) {
+                  Alert.alert('Atencion!', 'El numero de DNI es incorrecto.');
+                  dniRef.current.focus(); // Enfocar automáticamente
+                  setFocusedInput('userDni'); // Resaltar el campo
+                  return;
+             }     
+
+            if(userName.trim().length === 0) {
+                Alert.alert('Atencion!', 'Por favor ingrese su Email.');
+                emailRef.current.focus(); // Enfocar automáticamente
+                setFocusedInput('userName'); // Resaltar el campo
+                return;
+                 }
+                 
+            if(password.trim().length === 0) {
+                Alert.alert('Atencion!', 'Por favor ingrese su Password.');
+                passwordRef.current.focus(); // Enfocar automáticamente
+                setFocusedInput('password'); // Resaltar el campo
+                return;
+              }
+            
+            if(confirmPassword.trim().length === 0) {
+                Alert.alert('Atencion!', 'Por favor ingrese su Confirmacion de Password.');
+                confirpasswordRef.current.focus(); // Enfocar automáticamente
+                setFocusedInput('confirmPassword'); // Resaltar el campo
+                return;
+              }
+
             if (password !== confirmPassword) {
-                Alert.alert('Error', 'Password no coincide');
+                Alert.alert('Error', 'Password no coincide');               
+                confirpasswordRef.current.focus(); // Enfocar automáticamente
+                setFocusedInput('confirmPassword'); // Resaltar el campo
                 return;
             }
     
             if (!isValidEmail(userName)) {
                 Alert.alert('Error', 'Email no valido!');
+                emailRef.current.focus(); // Enfocar automáticamente
+                setFocusedInput('userName'); // Resaltar el campo
                 return;
             }
 
@@ -273,7 +381,9 @@ const RegisterScreen = ({navigation}) => {
             const existingUser = await db.getFirstAsync('SELECT * FROM users WHERE username = ?', [userName]);
             if (existingUser) {
                 Alert.alert('Error', 'Usuario ya existe.');
-                return;
+                emailRef.current.focus(); // Enfocar automáticamente
+                setFocusedInput('userName'); // Resaltar el campo
+                return;             
             }
          
             const result = await db.runAsync('INSERT INTO users (username, password,dni,nombape,lati,longi,altura) VALUES (?, ?,?, ?, ?,?, ?)', [userName, password,userDni,userNomb,latitude,longitude,altitude]);
@@ -297,44 +407,84 @@ const RegisterScreen = ({navigation}) => {
             <Image source={logo} style={styles.logo} />
             <Text style={styles.title}>Registro de Gestante</Text>
 
-            <TextInput 
-                style={styles.input}
-                placeholder='Nombres y Apellidos'
-                value={userNomb}
-                onChangeText={setUserNomb}
+            <TextInput  
+              ref={userNombRef} // Asignar la referencia         
+              style={[
+                styles.input,
+                focusedInput === 'userNomb' && styles.inputFocused,
+              ]}
+              placeholder="Nombres y Apellidos"
+              value={userNomb}
+              onChangeText={setUserNomb}
+              onFocus={() => setFocusedInput('userNomb')}
+              onBlur={() => setFocusedInput(null)}
+              returnKeyType="next" // Configura el botón Enter para "siguiente"
+              onSubmitEditing={() => dniRef.current.focus()} 
             />
 
             <TextInput 
-                style={styles.input}
+                ref={dniRef} // Asignar la referencia         
+                style={[
+                  styles.input,
+                  focusedInput === 'userDni' && styles.inputFocused,
+                ]}
                 placeholder='DNI'
                 value={userDni}
                 maxLength={8}
                 keyboardType="numeric"
                 onChangeText={setUserDni}
+                onFocus={() => setFocusedInput('userDni')}
+                onBlur={() => setFocusedInput(null)}
+                returnKeyType="next"
+                onSubmitEditing={() => emailRef.current.focus()} // Enfoca al siguiente campo
             />
 
             <TextInput 
-                style={styles.input}
+                ref={emailRef} // Asignar la referencia         
+                style={[
+                  styles.input,
+                  focusedInput === 'userName' && styles.inputFocused,
+                ]}
                 placeholder='Email'
                 keyboardType="email-address"
                 value={userName}
                 onChangeText={setUserName}
+                onFocus={() => setFocusedInput('userName')}
+                onBlur={() => setFocusedInput(null)}
+                returnKeyType="next"
+                onSubmitEditing={() => passwordRef.current.focus()} // Enfoca al siguiente campo
             />
             <TextInput 
-                style={styles.input}
+                ref={passwordRef} // Asignar la referencia         
+                style={[
+                  styles.input,
+                  focusedInput === 'password' && styles.inputFocused,
+                ]}
                 placeholder='Password'
                 secureTextEntry
                 maxLength={10}
                 value={password}
                 onChangeText={setPassword}
+                onFocus={() => setFocusedInput('password')}
+                onBlur={() => setFocusedInput(null)}
+                returnKeyType="next"
+                onSubmitEditing={() => confirpasswordRef.current.focus()} // Enfoca al siguiente campo
             />
             <TextInput 
-                style={styles.input}
+                ref={confirpasswordRef} // Asignar la referencia         
+                style={[
+                  styles.input,
+                  focusedInput === 'confirmPassword' && styles.inputFocused,
+                ]}
                 placeholder='Confirmar password'
                 secureTextEntry
                 value={confirmPassword}
                 maxLength={10}
                 onChangeText={setConfirmPassword}
+                onFocus={() => setFocusedInput('confirmPassword')}
+                onBlur={() => setFocusedInput(null)}
+                returnKeyType="done" // Último campo no necesita ir a otro
+                onSubmitEditing={handleRegister} // Invoca el registro al terminar
             />             
             
             <Pressable style={styles.button} onPress={handleRegister}>
@@ -1068,6 +1218,10 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     marginVertical: 5,
   },
+  inputFocused: {
+    backgroundColor: 'yellow',
+    fontWeight: 'bold',
+  },
   button: {
     backgroundColor: 'blue',
     padding: 10,
@@ -1086,7 +1240,7 @@ const styles = StyleSheet.create({
   linkText: {
     color: 'blue',
     fontWeight: 'bold',
-    fontSize: 14,
+    fontSize: 16,
 },
   userText: {
     fontSize: 18,
