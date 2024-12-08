@@ -32,7 +32,13 @@
     },
     "owner": "bimbo",
     "plugins": [
-      "expo-sqlite"
+      "expo-sqlite",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Permitir a $(PRODUCT_NAME) para usar su ubicacion."
+        }
+      ]
     ]
   }
 }

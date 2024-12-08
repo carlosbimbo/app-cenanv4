@@ -1,6 +1,7 @@
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View, TextInput, Pressable, Alert, Image,TouchableOpacity,KeyboardAvoidingView,ScrollView,FlatList } from 'react-native';
 import { SQLiteProvider, useSQLiteContext } from 'expo-sqlite';
+import * as Location from 'expo-location';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { useState, useEffect } from 'react';
@@ -14,6 +15,8 @@ import iconsave from './images/btnsave.png';
 import { Calendar, LocaleConfig } from 'react-native-calendars';
 import DropDownPicker from 'react-native-dropdown-picker';
 
+import getUserLocation  from './hooks/userLocation';
+
 //initialize the database
 const initializeDatabase = async(db) => {
     try {
@@ -24,7 +27,10 @@ const initializeDatabase = async(db) => {
                 username varchar(100) UNIQUE,
                 password varchar(10),
                 dni varchar(8),
-                nombape varchar(150)
+                nombape varchar(150),
+                lati varchar(100),
+                longi varchar(100),
+                altura varchar(100)
             );
         `);
 
@@ -184,46 +190,104 @@ const RegisterScreen = ({navigation}) => {
     const db = useSQLiteContext();
     const [userName, setUserName] = useState('');
     const [password, setPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
-    
+    const [confirmPassword, setConfirmPassword] = useState('');    
     const [userDni, setUserDni] = useState('');
     const [userNomb, setUserNomb] = useState('');
 
+    //add 07122024
+    const [errorMsg, setErrorMsg] = useState('');
+    const [latitude, setLatitude] = useState(null);
+    const [longitude, setLongitude] = useState(null);
+    const [altitude, setAltitude] = useState(null);
+  
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(com|org|net)$/;
     const isValidEmail = (userName) => emailRegex.test(userName);
+    
+    ////////////add aqui gps 08122024
+      // Hook para obtener la ubicación al montar el componente
+  useEffect(() => {
+    const fetchLocation = async () => {
+      const location = await getUserLocation();
+      if (location.errorMsg) {
+        setErrorMsg(location.errorMsg);
+        Alert.alert('Error de ubicación', location.errorMsg);
+      } else {
+        const { latitude, longitude, altitude } = location;
+        setLatitude(latitude);
+        setLongitude(longitude);
+        setAltitude(altitude);
+        /*  
+        Alert.alert(
+          'Ubicación obtenida',
+          `Latitud: ${latitude}\nLongitud: ${longitude}\nAltitud: ${altitude}`
+        );
+        */
+      }
+    };
 
+    fetchLocation(); // Llamar a la función para obtener la ubicación
+  }, []); // [] asegura que solo se ejecuta al montar el component
+    ////////////Fin add aqui gps 08122024
+    
     //function to handle registration logic
     const handleRegister = async() => {
-        if  (userName.length === 0 || password.length === 0 || confirmPassword.length === 0) {
-            Alert.alert('Atencion!', 'Por favor ingrese todos los campos.');
-            return;
-        }
-        if (password !== confirmPassword) {
-            Alert.alert('Error', 'Password no coincide');
-            return;
-        }
-
-        if (!isValidEmail(userName)) {
-            Alert.alert('Error', 'Email no valido!');
-            return;
-        }
-
+   
         try {
+          /*
+          const location = await getUserLocation();
+          if (location.errorMsg) {
+            setErrorMsg(location.errorMsg);
+            Alert.alert('Error de ubicación', location.errorMsg);
+          } else {
+            const { latitude, longitude, altitude } = location;
+            setLatitude(latitude);
+            setLongitude(longitude);
+            setAltitude(altitude);
+    
+            Alert.alert(
+              'Ubicación obtenida',
+              `Latitud: ${latitude}\nLongitud: ${longitude}\nAltitud: ${altitude}`
+            );
+          }
+          */
+       
+            if  (userName.length === 0 || password.length === 0 || confirmPassword.length === 0) {
+                Alert.alert('Atencion!', 'Por favor ingrese todos los campos.');
+                return;
+            }
+            if (password !== confirmPassword) {
+                Alert.alert('Error', 'Password no coincide');
+                return;
+            }
+    
+            if (!isValidEmail(userName)) {
+                Alert.alert('Error', 'Email no valido!');
+                return;
+            }
+
+            if  (latitude==null && longitude==null && altitude==null) {
+              Alert.alert('Error en Obtener Ubicación', errorMsg);
+              return;
+             }
+
             const existingUser = await db.getFirstAsync('SELECT * FROM users WHERE username = ?', [userName]);
             if (existingUser) {
                 Alert.alert('Error', 'Usuario ya existe.');
                 return;
             }
-
-            const result = await db.runAsync('INSERT INTO users (username, password,dni,nombape) VALUES (?, ?,?, ?)', [userName, password,userDni,userNomb]);
+         
+            const result = await db.runAsync('INSERT INTO users (username, password,dni,nombape,lati,longi,altura) VALUES (?, ?,?, ?, ?,?, ?)', [userName, password,userDni,userNomb,latitude,longitude,altitude]);
             Alert.alert('Correcto', 'Registro Completado exitosamente!');
             //const insertedId = result.lastInsertRowId;
             //Alert.alert('Correcto', `Registro completado exitosamente! ID: ${insertedId}`);
             //navigation.navigate('Home', {user : userName});
             navigation.navigate('Login');
+           
         } catch (error) {
             console.log('Error durante el registro : ', error);
         }
+   
+      
     }
 
     return (
@@ -287,7 +351,7 @@ const RegisterScreen = ({navigation}) => {
 
 //HomeScreen component
 const HomeScreen = ({navigation, route}) => {
-
+    const db = useSQLiteContext();
     const categoryList = [
         {
           id: '1',
@@ -330,10 +394,46 @@ const HomeScreen = ({navigation, route}) => {
         '2': logoeco,
         '3': logofpp,
       };
+
+      //Add 08122024
+      /////////////////////////////////////
+        const [lat, setLat] = useState('');
+        const [lon, setLon] = useState('');
+        const [alt, setAlt] = useState('');
+        const [dni, setDni] = useState('');
+        const [isLoading, setIsLoading] = useState(true); // Indicador de carga
+      
+        // Cargar datos de la base de datos al montar el componente
+        useEffect(() => {
+          const fetchData = async () => {
+            try {
+              const valUser = await db.getFirstAsync('SELECT * FROM users WHERE id = ?', [user.id]);
+              if (valUser) {
+                setLat(valUser.lati || ''); 
+                setLon(valUser.longi || ''); 
+                setAlt(valUser.altura || ''); 
+                setDni(valUser.dni || ''); 
+              } else {
+                setLat(''); 
+                setLon(''); 
+                setAlt(''); 
+                setDni(''); 
+              }
+            } catch (error) {
+              console.log('Error al consultar la base de datos:', error);
+            } finally {
+              setIsLoading(false); 
+            }
+          };
+      
+          fetchData();
+        }, [db, user.id]);
+      /////////////////////////////////////
+      //Fin Add 08122024
     
     return (
         <View className="mt-3">
-        <Text className="bg-violet-100 p-4 text-black m-10 border border-solid border-green-900 rounded font-bold text-[17px] text-center">En base a la informacion que manejes seleciona una opcion para calcular tu edad gestacional {user.username}-{user.id}</Text>
+        <Text className="bg-violet-100 p-4 text-black m-10 border border-solid border-green-900 rounded font-bold text-[17px] text-center">En base a la informacion que manejes seleciona una opcion para calcular tu edad gestacional {user.username}-{user.id} - DNI es : {dni} : Datos de GeoLocalizacion : Latitud : {lat} - Longitud :  {lon} - Altitud :  {alt}</Text>
         <FlatList
           data={categoryList}
           numColumns={1}
@@ -623,8 +723,18 @@ const [items2, setItems2] = useState([
 ]);
 ///////////////////////////////////////////////
 
-const handleButtonPress = async () => {
+const handleButtonPress = async () => {  
   try {
+
+    if (!value) {
+      Alert.alert('Error', 'Por favor, selecciona una opción en el numero de semanas.');
+      return false;
+    }
+    if (!value2) {
+      Alert.alert('Error', 'Por favor, selecciona una opción en el numero de dias.');
+      return false;
+    }
+
     const valUserEco = await db.getFirstAsync(
       'SELECT * FROM T_05_ETAPA_GESTACIONAL WHERE id = ?',
       [user.id]
