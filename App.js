@@ -613,6 +613,9 @@ const FurScreen = ({navigation, route}) => {
     //we'll extract the user parameter from route.params
     const { user } = route.params;
 
+    const [focusedInput, setFocusedInput] = useState(null); 
+    const selectedDateRef = useRef(null);
+
     LocaleConfig.locales['fr'] = {
         monthNames: [
           'Enero',
@@ -638,7 +641,7 @@ const FurScreen = ({navigation, route}) => {
 
     /////////////////////////////////////
     const [selectedDate, setSelectedDate] = useState('');
-    const [isLoading, setIsLoading] = useState(true); // Indicador de carga
+    const [isLoading, setIsLoading] = useState(true); 
   
     // Cargar datos de la base de datos al montar el componente
     useEffect(() => {
@@ -669,11 +672,25 @@ const FurScreen = ({navigation, route}) => {
         console.log('selected day', day);
      };
 
+     useEffect(() => {
+      if (selectedDateRef.current) {
+        selectedDateRef.current.focus();
+        setFocusedInput('selectedDate'); 
+      }
+    }, []);
+
      const handleRegiFur = async() => {
 
         //Alert.alert('Presionaste!', 'Presionaste handleRegiFur!!!');    
                  
             try {   
+
+              if(selectedDate.trim().length === 0) {
+                Alert.alert('Atencion!', 'Por favor ingrese una Fecha!.');
+                selectedDateRef.current.focus();
+                setFocusedInput('selectedDate'); 
+                return;
+                }
 
                 const valUserFur = await db.getFirstAsync('SELECT * FROM T_05_ETAPA_GESTACIONAL WHERE id = ?', [user.id]);
                 
@@ -709,12 +726,18 @@ const FurScreen = ({navigation, route}) => {
         </View>
         <View style={styles.containerCalendar}>        
         <TextInput 
-                style={styles.input}
+                ref={selectedDateRef} // Asignar la referencia         
+                style={[
+                  styles.input,
+                  focusedInput === 'selectedDate' && styles.inputFocused,
+                ]}
                 placeholder='Fecha'     
                 editable={false}           
                 maxLength={10}
                 value={selectedDate}
                 onChangeText={setSelectedDate}
+                onFocus={() => setFocusedInput('selectedDate')}
+                onBlur={() => setFocusedInput(null)}
             />    
         <Calendar
         style={styles.calendar} 
@@ -789,6 +812,8 @@ const EcoScreen = ({navigation, route}) => {
     const [value2, setValue2] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
   
+    const [errorSemana, setErrorSemana] = useState(false);
+    const [errorDias, setErrorDias] = useState(false);
 
    // Cargar datos de la base de datos al montar el componente
   useEffect(() => {
@@ -873,16 +898,22 @@ const [items2, setItems2] = useState([
 ]);
 ///////////////////////////////////////////////
 
+
 const handleButtonPress = async () => {  
   try {
 
-    if (!value) {
+    //Alert.alert('Error combate value :', value);
+    if (!value || value == 'null') {
+      setErrorSemana(true); // Resalta el combo de semanas
+      setErrorDias(false); // Asegura que el otro combo no se marque
       Alert.alert('Error', 'Por favor, selecciona una opción en el numero de semanas.');
-      return false;
+      return;
     }
-    if (!value2) {
+    if (!value2 || value2 == 'null') {
+      setErrorDias(true); // Resalta el combo de días
+      setErrorSemana(false); // Asegura que el otro combo no se marque
       Alert.alert('Error', 'Por favor, selecciona una opción en el numero de dias.');
-      return false;
+      return;
     }
 
     const valUserEco = await db.getFirstAsync(
@@ -895,15 +926,15 @@ const handleButtonPress = async () => {
         'UPDATE T_05_ETAPA_GESTACIONAL SET eco_nro_sem_emb = ?, eco_nro_dias_emb = ? WHERE id = ?',
         [value, value2, user.id]
       );
-      Alert.alert('Correcto', 'Registro de Ecografia Actualizado exitosamente!');      
-      navigation.navigate('Home', {user:user});
+      //Alert.alert('Correcto', 'Registro de Ecografia Actualizado exitosamente!');      
+      //navigation.navigate('Home', {user:user});
     } else {
       await db.runAsync(
         'INSERT INTO T_05_ETAPA_GESTACIONAL (id, eco_nro_sem_emb, eco_nro_dias_emb) VALUES (?, ?, ?)',
         [user.id, value, value2]
       );
-      Alert.alert('Correcto', 'Registro de Ecografia Registrado exitosamente!');      
-      navigation.navigate('Home', {user:user});         
+      //Alert.alert('Correcto', 'Registro de Ecografia Registrado exitosamente!');      
+      //navigation.navigate('Home', {user:user});         
     }
   } catch (error) {
     console.log('Error al guardar los datos:', error);
@@ -936,9 +967,9 @@ const handleButtonPress = async () => {
               style={{
                 width: '100%',
                 height: 50,
-                backgroundColor: '#f1f5f9',
-                borderColor: '#cbd5e1',
-                borderRadius: 8,
+                backgroundColor: errorSemana ? 'yellow' : '#f1f5f9', // Amarillo si hay error
+                borderColor: errorSemana ? '#facc15' : '#cbd5e1', // Amarillo si hay error
+                borderRadius: 8,                
               }}
               dropDownContainerStyle={{
                 width: '100%',
@@ -965,8 +996,8 @@ const handleButtonPress = async () => {
               style={{
                 width: '100%',
                 height: 50,
-                backgroundColor: '#f1f5f9',
-                borderColor: '#cbd5e1',
+                backgroundColor: errorDias ? 'yellow' : '#f1f5f9', // Amarillo si hay error
+                borderColor: errorDias ? '#facc15' : '#cbd5e1', // Amarillo si hay error
                 borderRadius: 8,
               }}
               dropDownContainerStyle={{
@@ -1016,6 +1047,9 @@ const handleButtonPress = async () => {
 const PartoScreen = ({navigation, route}) => {
 
     const db = useSQLiteContext();
+
+    const [focusedInput, setFocusedInput] = useState(null); 
+    const selectedDateRef = useRef(null);
 
     //we'll extract the user parameter from route.params
     const { user } = route.params;
@@ -1071,11 +1105,25 @@ const PartoScreen = ({navigation, route}) => {
         console.log('selected day', day);
      };
 
+     useEffect(() => {
+      if (selectedDateRef.current) {
+        selectedDateRef.current.focus();
+        setFocusedInput('selectedDate'); 
+      }
+    }, []);
+
      const handleRegiFpp = async() => {
 
         //Alert.alert('Presionaste!', 'Presionaste handleRegiFpp!!!');    
                  
-            try {   
+            try { 
+              
+              if(selectedDate.trim().length === 0) {
+                Alert.alert('Atencion!', 'Por favor ingrese una Fecha!.');
+                selectedDateRef.current.focus();
+                setFocusedInput('selectedDate'); 
+                return;
+                }
 
                 const valUserFpp = await db.getFirstAsync('SELECT * FROM T_05_ETAPA_GESTACIONAL WHERE id = ?', [user.id]);
                   
@@ -1107,12 +1155,18 @@ const PartoScreen = ({navigation, route}) => {
         </View>
         <View style={styles.containerCalendar}>        
         <TextInput 
-                style={styles.input}
+                ref={selectedDateRef} // Asignar la referencia         
+                style={[
+                  styles.input,
+                  focusedInput === 'selectedDate' && styles.inputFocused,
+                ]}
                 placeholder='Fecha'     
                 editable={false}           
                 maxLength={10}
                 value={selectedDate}
                 onChangeText={setSelectedDate}
+                onFocus={() => setFocusedInput('selectedDate')}
+                onBlur={() => setFocusedInput(null)}
             />    
         <Calendar
         style={styles.calendar} 
