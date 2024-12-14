@@ -4,6 +4,10 @@ import { createStackNavigator } from '@react-navigation/stack';
 import HomeScreen from '../Screens/HomeScreen';
 import ItemList from '../Screens/ItemList';
 import ProductDetail from '../Screens/ProductDetail';
+import MapsDetail from '../Screens/MapsDetail';
+
+import { SQLiteProvider, useSQLiteContext } from 'expo-sqlite';
+import { NavigationContainer } from '@react-navigation/native';
 
 const Stack = createStackNavigator(); 
 
@@ -29,10 +33,21 @@ export default function HomeScreeStackNav({ route }) {
         component={ProductDetail}
         options={{
             headerStyle:{
-                backgroundColor:'#3b82f6',
+                backgroundColor:'lightblue',
             },
-            headerTintColor:'#fff',
-            headerTitle:'Detail'
+            headerTintColor:'#000',
+            headerTitle:'Regresar al Inicio'
+        }}
+        
+        />
+        <Stack.Screen name='mapita-detail' 
+        component={MapsDetail}
+        options={{
+            headerStyle:{
+                backgroundColor:'lightblue',
+            },
+            headerTintColor:'#000',
+            headerTitle:'Regresar al Inicio'
         }}
         
         />

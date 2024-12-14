@@ -1,4 +1,4 @@
-import { StyleSheet, View, Text, Image, ScrollView, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, Text, Image, ScrollView, TouchableOpacity,FlatList } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import Header from '../Components/HomeScreen/Header';
 import Slider from '../Components/HomeScreen/Slider';
@@ -8,7 +8,7 @@ import LatestItemList from '../Components/HomeScreen/LatestItemList';
 import { SQLiteProvider, useSQLiteContext } from 'expo-sqlite';
 import { Agenda } from 'react-native-calendars';
 import { calendarTheme } from 'react-native-calendars'; // Import the default calendar theme
-
+import { useNavigation } from '@react-navigation/native'
 import logosizebb1 from '../../images/sizeweekbb/sizelogobebe1.png';
 import logosizebb5 from '../../images/sizeweekbb/sizelogobebe5.png';
 import logosizebb6 from '../../images/sizeweekbb/sizelogobebe6.png';
@@ -47,9 +47,16 @@ import logosizebb38 from '../../images/sizeweekbb/sizelogobebe38.png';
 import logosizebb39 from '../../images/sizeweekbb/sizelogobebe39.png';
 import logosizebb40 from '../../images/sizeweekbb/sizelogobebe40.png';
 
+import icotomas from '../../images/icotomas.png';
+import reompensas from '../../images/reompensas.png';
+import icotips from '../../images/icotips.png';
+import icomaps from '../../images/icomaps.png';
+
+
 export default function HomeScreen({ route }) {
   const db = useSQLiteContext();
   const { user } = route.params;
+  const navigation=useNavigation();
 
   const [agendaItems, setAgendaItems] = useState([]);
   const [formattedAgenda, setFormattedAgenda] = useState({});
@@ -88,7 +95,7 @@ export default function HomeScreen({ route }) {
     const fetchAgendaItems = async () => {
       try {
         //const results = await db.getAllAsync('SELECT * FROM T_05_AGENDA_GESTACIONAL WHERE id = ?', [user.id]);
-        const results = await db.getAllAsync('select a.id,a.nrosem,a.fec_marker,b.desc_img,b.img_bb,b.altura_bb,b.peso_bb from T_05_AGENDA_GESTACIONAL a join T_LECT_SEMANAS b on b.nro_semana = a.nrosem WHERE a.id = ?', [user.id]);
+        const results = await db.getAllAsync('select a.id,a.nrosem,a.fec_marker,b.desc_img,b.img_bb,b.altura_bb,b.peso_bb,c.calcu_nrosema,c.calcu_nrodias,c.calcu_nrodias_parto,c.calcu_fecaprox_parto from T_05_AGENDA_GESTACIONAL a join T_LECT_SEMANAS b on b.nro_semana = a.nrosem left join T_05_ETAPA_GESTACIONAL c on c.id = a.id WHERE a.id = ?', [user.id]);
 
         setAgendaItems(results);
       } catch (error) {
@@ -107,7 +114,7 @@ export default function HomeScreen({ route }) {
       const currentWeekEndStrMax = currentWeekEnd.toISOString().split('T')[0];
   
       const transformed = agendaItems.reduce((acc, item) => {
-        const { id,nrosem,fec_marker,desc_img,img_bb,altura_bb,peso_bb } = item;
+        const { id,nrosem,fec_marker,desc_img,img_bb,altura_bb,peso_bb,calcu_nrosema,calcu_nrodias,calcu_nrodias_parto,calcu_fecaprox_parto } = item;
 
         // Incluir solo los eventos anteriores o dentro de la semana actual
         if (fec_marker <= currentWeekEndStrMax) {
@@ -115,6 +122,12 @@ export default function HomeScreen({ route }) {
             nrosem: nrosem,
             name: desc_img,
             semat: `Estas en tu semana numero : ${nrosem} de Embarazo`,
+            alturabb: altura_bb,
+            pesobb: peso_bb,            
+            cal_nrosema: calcu_nrosema,
+            cal_nrodias: calcu_nrodias,
+            cal_nrodias_parto: calcu_nrodias_parto,
+            cal_fecaprox_parto: calcu_fecaprox_parto,
             day: fec_marker,
           };
 
@@ -163,8 +176,56 @@ export default function HomeScreen({ route }) {
     agendaTodayColor: 'red',
     agendaKnobColor: 'blue',
   };
+
+  const categoryList = [
+    {
+      id: '1',
+      title: 'Toma de Suplementos',
+    },
+    {
+      id: '2',
+      title: 'Mis Recompensas',
+    },
+    {
+      id: '3',
+      title: 'Mis Tips de Gestación',
+    },
+    {
+      id: '4',
+      title: 'Centros de Salud mas Cercanos',
+    },
+  ];
+
+  const imageMenubtn = {
+    '1': icotomas,
+    '2': reompensas,
+    '3': icotips,
+    '4': icomaps,    
+  };
+
+  const handleNavigationBtn = (id) => {
+    switch (id) {
+      case '1':
+        //navigation.navigate('Fur',{user : user});
+        break;
+      case '2':
+        //navigation.navigate('Eco',{user : user});
+        break;          
+      case '3':
+        //navigation.navigate('Parto',{user : user});
+        break;     
+      case '4':
+        navigation.push('mapita-detail', {          
+          user: user,
+        })
+          break;       
+      default:
+        console.log('Opción no válida');
+    }
+  };
   
   return (
+    <>
     <View style={{ flex: 1, marginHorizontal: 10 }}>
       <Agenda
         items={formattedAgenda}
@@ -172,18 +233,54 @@ export default function HomeScreen({ route }) {
         markingType={'custom'}
         showOnlySelectedDayItems={true}
         theme={customTheme}
-        selected={getFinalEventOfWeek(formattedAgenda)} // Seleccionar el evento de la semana actual, incluso si está en el futuro
+        selected={getFinalEventOfWeek(formattedAgenda)}
         renderItem={(item) => (
-          <View style={{ marginVertical: 10, marginTop: 30, backgroundColor: 'white', marginHorizontal: 10, padding: 10 }}>
-            <Text style={{ fontSize: 18,fontWeight: 'bold' }}>{item.name}</Text>           
-            <Text style={{ marginTop: 20,fontSize: 14 }}>{item.semat}</Text>
-            <View className="flex-1 items-center justify-center">
-              <Image
-                source={imageMapping[item.nrosem]}
-                className="w-40 h-40 border-2 border-blue-500"
-              />
+          <TouchableOpacity
+            className="flex-1 m-2 p-2 rounded-lg border-[1px] border-slate-200"
+            onPress={() =>
+              navigation.push('product-detail', {
+                baby: item,
+                user: user,
+              })
+            }
+          >
+            <View
+              style={{
+                marginVertical: 10,
+                marginTop: 30,
+                backgroundColor: 'white',
+                marginHorizontal: 10,
+                padding: 10,
+              }}
+            >
+              <Text style={{ fontSize: 18, fontWeight: 'bold' }}>{item.name}</Text>
+              <Text style={{ marginTop: 20, fontSize: 14 }}>{item.semat}</Text>
+              <View className="flex-1 items-center justify-center">
+                <Image
+                  source={imageMapping[item.nrosem]}
+                  className="w-40 h-40 border-2 border-blue-500"
+                />
+              </View>
+              {/* Botones debajo de la imagen */}
+              <View className="flex-row flex-wrap items-center justify-between mt-4">
+                {categoryList.map((category) => (
+                  <TouchableOpacity
+                    key={category.id}
+                    className="w-[90%] flex-row items-center justify-center p-2 border-[1px] border-blue-600 rounded-lg bg-blue-650 m-1"
+                    onPress={() => handleNavigationBtn(category.id)}
+                  >
+                    <Image
+                      source={imageMenubtn[category.id]}
+                      className="w-[25px] h-[25px] mr-2"
+                    />
+                    <Text className="text-black font-bold text-[12px]">
+                      {category.title}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
             </View>
-          </View>
+          </TouchableOpacity>
         )}
         renderEmptyData={() => (
           <View style={styles.emptyContainer}>
@@ -192,6 +289,7 @@ export default function HomeScreen({ route }) {
         )}
       />
     </View>
+  </>  
   );
 }
 

@@ -20,7 +20,24 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.bimbo.appcenanv4"
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyCSo_1eJlDb9mg_562DrKycx7whCrRopSM"
+        }
+      },"permissions": [
+        "INTERNET",
+        "ACCESS_NETWORK_STATE",
+        "ACCESS_WIFI_STATE",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "WAKE_LOCK",
+        "MANAGE_EXTERNAL_STORAGE",
+        "GET_TASKS",
+        "CHANGE_WIFI_STATE",
+        "CAMERA"       
+      ],"package": "com.bimbo.appcenanv4"
     },
     "web": {
       "favicon": "./assets/favicon.png"
