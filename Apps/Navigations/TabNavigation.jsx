@@ -64,6 +64,7 @@ export default function TabNavigation({ navigation, route }) {
       <Tab.Screen
         name="explore"
         component={ExploreScreenStackNav}
+        initialParams={{ user }}
         options={{
           tabBarLabel: ({ focused, color }) => (
             <Text

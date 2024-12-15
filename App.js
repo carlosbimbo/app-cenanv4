@@ -651,6 +651,19 @@ const initializeDatabase = async(db) => {
             INSERT INTO T_LECT_EESS (nombre_eess,dir_eess,img_eess,gps_lat,gps_lon,telf,distrito,provincia,departamento,institucion,tipo) VALUES ('CENTRO DE SALUD SAN JUAN DE SALINAS','Jirón Jr. Turquesas S/N°,Parque 8,Asociacion De Vivienda El Rosario Del Norte S/N Jr. Turquesas S/N°,Parque 8,Asociacion De Vivienda El Rosario Del Norte San Martin De Porres Lima Lima ','eess_default.png','-11.9841531','-77.0853237','5850023','San Martin De Porres','Lima','Lima','Minsa','Centros De Salud O Centros Medicos');
             INSERT INTO T_LECT_EESS (nombre_eess,dir_eess,img_eess,gps_lat,gps_lon,telf,distrito,provincia,departamento,institucion,tipo) VALUES ('CENTRO DE SALUD GUSTAVO LANATTA LUJAN','Jirón Jr Felix De Valle 505 - Urb Condevilla 2Da Etapa Jr Felix De Valle 505 - Urb Condevilla 2Da Etapa San Martin De Porres Lima Lima ','eess_default.png','-12.0242216','-77.0732396','5861881','San Martin De Porres','Lima','Lima','Minsa','Centros De Salud O Centros Medicos');              
           `);
+          
+          await db.execAsync(`
+          PRAGMA journal_mode = WAL;
+          CREATE TABLE IF NOT EXISTS T_05_REGISTRO_EVENTOS (
+              ideven INTEGER PRIMARY KEY AUTOINCREMENT,
+              iduser INT NOT NULL,
+              tipo INT NULL,
+              fecha varchar(10),
+              hora varchar(10),
+              alarma INT NULL,
+              estado INT NULL
+              );
+          `);
 
         console.log('Database initialized !');
     } catch (error) {
