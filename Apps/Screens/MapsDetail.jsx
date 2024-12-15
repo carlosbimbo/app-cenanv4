@@ -17,7 +17,7 @@ const GOOGLE_API_KEY = 'AIzaSyCSo_1eJlDb9mg_562DrKycx7whCrRopSM'; // Reemplaza c
 
 
 
-export default function AddPostScreen({ route }) {
+export default function MapsDetail({ route }) {
   const db = useSQLiteContext();
   const { user } = route.params;
   const [focusedInput, setFocusedInput] = useState(null); // Estado para rastrear qué TextInput está activo

@@ -8,7 +8,7 @@ import AddPostScreen from '../Screens/AddPostScreen';
 import logotabuserprofile from '../../images/tabuserperfil.png';
 import logotabstart from '../../images/tabstart.png';
 import logotabagenda from '../../images/tabagenda.png';
-import logotabnotifi from '../../images/tabnoti.png';
+import icomaps from '../../images/icomaps.png';
 
 const Tab = createBottomTabNavigator();
 
@@ -64,6 +64,7 @@ export default function TabNavigation({ navigation, route }) {
       <Tab.Screen
         name="explore"
         component={ExploreScreenStackNav}
+        initialParams={{ user }}
         options={{
           tabBarLabel: ({ focused, color }) => (
             <Text
@@ -92,6 +93,7 @@ export default function TabNavigation({ navigation, route }) {
       <Tab.Screen
         name="addpost"
         component={AddPostScreen}
+        initialParams={{ user }}
         options={{
           tabBarLabel: ({ focused, color }) => (
             <Text
@@ -102,12 +104,12 @@ export default function TabNavigation({ navigation, route }) {
                 fontWeight: focused ? 'bold' : 'normal',
               }}
             >
-              Notificaciones
+              Eess
             </Text>
           ),
           tabBarIcon: ({ focused }) => (
             <Image
-              source={logotabnotifi}
+              source={icomaps}
               style={{
                 width: 35,
                 height: 35,
