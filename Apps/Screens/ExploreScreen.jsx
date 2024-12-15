@@ -65,9 +65,10 @@ export default function ExploreScreen({ route }) {
     const fetchEventsByDate = async () => {
       try {
         const results = await db.getAllAsync(
-          "SELECT hora, tipo, estado FROM T_05_REGISTRO_EVENTOS WHERE fecha = ? AND iduser = ?",
+          "SELECT hora, tipo, estado,descrip FROM T_05_REGISTRO_EVENTOS WHERE fecha = ? AND iduser = ?",
           [selectedDate, user.id]
         );
+        console.log('ListaEventos :',results);
         setEventsForSelectedDate(results);
       } catch (error) {
         console.error("Error al obtener eventos para la fecha seleccionada:", error);
@@ -141,6 +142,7 @@ export default function ExploreScreen({ route }) {
                 <Text style={styles.eventText}>
                   Tipo: {event.tipo === 1 ? "Nota Libre" : event.tipo === 2 ? "Cita Medica" : "Toma de Medicamento"}
                 </Text>
+                <Text style={styles.eventText}>Hora: {event.descrip}</Text>
                 <Text style={styles.eventText}>
                   Estado: {event.estado ? "Activo" : "Inactivo"}
                 </Text>

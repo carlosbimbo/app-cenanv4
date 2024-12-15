@@ -29,11 +29,17 @@ export default function ExploreScreenStackNav({ route }) {
       <Stack.Screen name='register-events-gestante' 
         component={RegisterEventsScreen}
         options={{
+            title:'Regresar al Calendario de Eventos',
             headerStyle:{
                 backgroundColor:'lightblue',
+                height: 40,
             },
-            headerTintColor:'#000',
-            headerTitle:'Regresar al Calendario de Eventos'
+            headerTintColor:'#000',          
+            headerTitleStyle: {              
+              fontSize: 18,
+              fontWeight: 'bold',
+              color: '#000', // Color del título
+          },
         }}
         
         />

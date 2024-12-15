@@ -660,6 +660,7 @@ const initializeDatabase = async(db) => {
               tipo INT NULL,
               fecha varchar(10),
               hora varchar(10),
+              descrip varchar(2000),
               alarma INT NULL,
               estado INT NULL
               );

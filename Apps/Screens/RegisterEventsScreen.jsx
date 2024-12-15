@@ -7,6 +7,8 @@ import {
   Platform,
   Image,
   TextInput,
+  SafeAreaView,
+  StyleSheet,
 } from "react-native";
 import React, { useState } from "react";
 import { useNavigation } from "@react-navigation/native";
@@ -20,185 +22,238 @@ export default function RegisterEventsScreen({ route }) {
   const navigation = useNavigation();
   const { user } = route.params;
 
-  // States
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
   const [selectedType, setSelectedType] = useState(null);
   const [isEnabled, setIsEnabled] = useState(false);
   const [openDropdown, setOpenDropdown] = useState(false);
+  const [eventDetail, setEventDetail] = useState(""); // Estado para el detalle del evento
+
   const [dropdownItems, setDropdownItems] = useState([
     { label: "Nota Libre", value: 1 },
     { label: "Cita Medica", value: 2 },
     { label: "Toma de Medicamento", value: 3 },
   ]);
 
-  // Focus states for controls
-  const [focusedField, setFocusedField] = useState(null);
-
-  // Modal states
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
+  const [isPressed, setIsPressed] = useState(false);
 
   const toggleSwitch = () => setIsEnabled((previousState) => !previousState);
 
-  // Handle Save Event
   const handleSaveEvents = async () => {
-    if (!selectedDate || !selectedTime || selectedType === null) {
+    if (!selectedDate || !selectedTime || selectedType === null || !eventDetail) {
       Alert.alert("Error", "Por favor, completa todos los campos");
       return;
     }
 
     try {
-     
-    console.log('guardadoBD Formu : ', `selectedDate: ${selectedDate} - selectedTime : ${selectedTime} - selectedType : ${selectedType} - isEnabled : ${isEnabled ? 1 : 0}`); 
-    
-     const resinsevent = await db.runAsync('INSERT INTO T_05_REGISTRO_EVENTOS (iduser,tipo,fecha,hora,alarma) VALUES (?,?,?,?,?)', [user.id, selectedType,selectedDate,selectedTime,isEnabled ? 1 : 0]);
-         
+      await db.runAsync(
+        "INSERT INTO T_05_REGISTRO_EVENTOS (iduser, tipo, fecha, hora, alarma, descrip) VALUES (?, ?, ?, ?, ?, ?)",
+        [user.id, selectedType, selectedDate, selectedTime, isEnabled ? 1 : 0, eventDetail]
+      );
+
+      console.log('guardadoBD Formu : ', `selectedDate: ${selectedDate} - selectedTime : ${selectedTime} - selectedType : ${selectedType} - isEnabled : ${isEnabled ? 1 : 0} - eventDetail : ${eventDetail}`); 
+
       Alert.alert("Éxito", "Evento registrado correctamente!");
-      //navigation.goBack();
-      navigation.push('explore-tab');
+      navigation.push("explore-tab");
     } catch (error) {
       console.error(error);
       Alert.alert("Error", "No se pudo registrar el evento");
     }
   };
 
-  // Handlers for Date Picker
   const onChangeDate = (event, date) => {
-    if (Platform.OS === "android") setShowDatePicker(false); // Close picker on Android
+    if (Platform.OS === "android") setShowDatePicker(false);
     if (date) {
-      // Formatear la fecha sin cambiar la zona horaria
-      const formattedDate = date.toLocaleDateString("en-CA"); // Formato: YYYY-MM-DD
+      const formattedDate = date.toLocaleDateString("en-CA");
       setSelectedDate(formattedDate);
     }
   };
 
-  // Handlers for Time Picker
   const onChangeTime = (event, selectedTime) => {
-    if (Platform.OS === "android") setShowTimePicker(false); // Close picker on Android
+    if (Platform.OS === "android") setShowTimePicker(false);
     if (selectedTime) {
       const hours = selectedTime.getHours();
       const minutes = selectedTime.getMinutes();
       const formattedTime = `${hours.toString().padStart(2, "0")}:${minutes
         .toString()
-        .padStart(2, "0")}`; // HH:MM
+        .padStart(2, "0")}`;
       setSelectedTime(formattedTime);
     }
   };
-  const [isPressed, setIsPressed] = useState(false);
+
   return (
-    <View className="flex-1 bg-gradient-to-b from-blue-100 to-blue-200 p-4">
-      {/* Título */}
-      <Text className="font-extrabold text-center text-[15px] bg-gradient-to-r from-purple-100 to-violet-200 p-4 text-blue-800 m-2 border border-green-700 rounded-xl shadow-lg">
-      <Text className="text-purple-700">Registro de Eventos</Text>
-      </Text>  
+    <SafeAreaView style={styles.container}>
+      <View style={styles.formContainer}>
+        <Text className="mb-4 font-extrabold text-center text-[16px] bg-gradient-to-r from-purple-100 to-violet-200 p-2 text-blue-800 border border-green-700 rounded-xl shadow-lg">
+          <Text className="text-purple-700">Registro de Eventos</Text>
+        </Text>
 
-      {/* Fecha */}
-      <View className={`my-2 ${focusedField === "date" ? "bg-purple-100" : ""} p-2 rounded-lg`}
-        onFocus={() => setFocusedField("date")}
-        onBlur={() => setFocusedField(null)}>
-        <Text className="text-base font-medium text-gray-800 mb-1">Fecha:</Text>
-        <TouchableOpacity
-          className="border border-gray-300 rounded-md p-3 bg-white shadow-sm"
-          onPress={() => setShowDatePicker(true)}
-        >
-          <Text className="text-gray-600">{selectedDate || "Selecciona una fecha"}</Text>
-        </TouchableOpacity>
-        {showDatePicker && (
-          <DateTimePicker
-            value={new Date()}
-            mode="date"
-            display="default"
-            onChange={onChangeDate}
-          />
-        )}
-      </View>
-
-      {/* Hora */}
-      <View className={`my-2 ${focusedField === "time" ? "bg-purple-100" : ""} p-2 rounded-lg`}
-        onFocus={() => setFocusedField("time")}
-        onBlur={() => setFocusedField(null)}>
-        <Text className="text-base font-medium text-gray-800 mb-1">Hora:</Text>
-        <TouchableOpacity
-          className="border border-gray-300 rounded-md p-3 bg-white shadow-sm"
-          onPress={() => setShowTimePicker(true)}
-        >
-          <Text className="text-gray-600">{selectedTime || "Selecciona una hora"}</Text>
-        </TouchableOpacity>
-        {showTimePicker && (
-          <DateTimePicker
-            value={new Date()}
-            mode="time"
-            display="default"
-            onChange={onChangeTime}
-          />
-        )}
-      </View>
-
-      {/* Dropdown */}
-      <View className={`my-2 ${focusedField === "type" ? "bg-purple-100" : ""} p-2 rounded-lg`}
-        onFocus={() => setFocusedField("type")}
-        onBlur={() => setFocusedField(null)}>
-        <Text className="text-base font-medium text-gray-800 mb-1">Tipo:</Text>
-        <DropDownPicker
-          open={openDropdown}
-          value={selectedType}
-          items={dropdownItems}
-          setOpen={setOpenDropdown}
-          setValue={setSelectedType}
-          setItems={setDropdownItems}
-          placeholder="Selecciona un tipo"
-          style={{
-            borderColor: focusedField === "type" ? "#7c3aed" : "#ccc",
-            borderRadius: 6,
-          }}
-          dropDownContainerStyle={{
-            borderColor: "#ccc",
-          }}
-          labelStyle={{ color: "#4b5563" }}
-          selectedItemLabelStyle={{ color: "#7c3aed", fontWeight: "bold" }}
+        <TextInput
+          placeholder="Detalle del Evento"
+          multiline
+          style={styles.textArea}
+          value={eventDetail} // Conecta el estado con el TextInput
+          onChangeText={(text) => setEventDetail(text)} // Actualiza el estado al escribir
         />
-      </View>
 
-      {/* Switch */}
-      <View className="flex-row items-center justify-between my-4">
-        <Text className="text-base font-medium text-gray-800">Estado:</Text>
-        <Switch
+        <View style={styles.controlContainer}>
+          <Text style={styles.label}>Fecha:</Text>
+          <TouchableOpacity
+            style={styles.input}
+            onPress={() => setShowDatePicker(true)}
+          >
+            <Text style={styles.inputText}>
+              {selectedDate || "Selecciona una fecha"}
+            </Text>
+          </TouchableOpacity>
+          {showDatePicker && (
+            <DateTimePicker
+              value={new Date()}
+              mode="date"
+              display="default"
+              onChange={onChangeDate}
+            />
+          )}
+        </View>
+
+        <View style={styles.controlContainer}>
+          <Text style={styles.label}>Hora:</Text>
+          <TouchableOpacity
+            style={styles.input}
+            onPress={() => setShowTimePicker(true)}
+          >
+            <Text style={styles.inputText}>
+              {selectedTime || "Selecciona una hora"}
+            </Text>
+          </TouchableOpacity>
+          {showTimePicker && (
+            <DateTimePicker
+              value={new Date()}
+              mode="time"
+              display="default"
+              onChange={onChangeTime}
+            />
+          )}
+        </View>
+
+        <View style={styles.controlContainer}>
+          <Text style={styles.label}>Tipo:</Text>
+          <DropDownPicker
+            open={openDropdown}
+            value={selectedType}
+            items={dropdownItems}
+            setOpen={setOpenDropdown}
+            setValue={setSelectedType}
+            setItems={setDropdownItems}
+            placeholder="Selecciona un tipo"
+            style={styles.dropdown}
+            dropDownContainerStyle={styles.dropdownContainer}
+          />
+        </View>
+
+        <View style={styles.switchContainer}>
+          <Text style={styles.label}>Estado:</Text>
+          <Switch
             trackColor={{ false: "#d1d5db", true: "#34d399" }}
             thumbColor={isEnabled ? "#10b981" : "#f3f4f6"}
             onValueChange={toggleSwitch}
             value={isEnabled}
-            style={{ transform: [{ scaleX: 1.5 }, { scaleY: 1.5 }] }}
+            style={styles.switch}
           />
-      </View>
+        </View>
 
-      {/* Botón Guardar */}
-      <TouchableOpacity 
-      onPress={handleSaveEvents}   
-      onPressIn={() => setIsPressed(true)} // Activa el estado "presionado"
-      onPressOut={() => setIsPressed(false)} // Desactiva el estado al soltar
-      className={`flex-row items-center justify-center bg-gradient-to-r from-green-400 to-green-600 rounded-lg ${
-        isPressed ? 'bg-blue-700' : 'bg-blue-500'
-      }`}
-      style={{
-        width: "70%",
-        alignSelf: "center",
-        paddingVertical: 10,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.3,
-        shadowRadius: 4,
-        elevation: 5,
-      }}
-      activeOpacity={0.8} // Reduce la opacidad al presionar
-    >
-      <Image
-        source={iconsavebtn}
-        className="w-8 h-8 mr-2" // Reduce el tamaño del ícono para que encaje con la altura del botón
-        resizeMode="contain"
-      />
-      <Text className="text-white font-semibold text-base">Crear Evento</Text> 
-    </TouchableOpacity>
-    </View>
+        <TouchableOpacity
+          onPress={handleSaveEvents}
+          onPressIn={() => setIsPressed(true)}
+          onPressOut={() => setIsPressed(false)}
+          style={[styles.button, isPressed && styles.buttonPressed]}
+        >
+          <Image source={iconsavebtn} style={styles.buttonIcon} />
+          <Text style={styles.buttonText}>Crear Evento</Text>
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#f3f4f6",
+  },
+  formContainer: {
+    padding: 20,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: "bold",
+    textAlign: "center",
+    marginBottom: 20,
+  },
+  controlContainer: {
+    marginBottom: 20,
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: "500",
+    marginBottom: 8,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    padding: 12,
+    backgroundColor: "#fff",
+  },
+  inputText: {
+    fontSize: 16,
+    color: "#4b5563",
+  },
+  dropdown: {
+    borderColor: "#ccc",
+    borderRadius: 8,
+  },
+  dropdownContainer: {
+    borderColor: "#ccc",
+  },
+  textArea: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    padding: 12,
+    backgroundColor: "#fff",
+    minHeight: 80,
+    textAlignVertical: "top",
+  },
+  switchContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  switch: {
+    transform: [{ scaleX: 1.2 }, { scaleY: 1.2 }],
+  },
+  button: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#34d399",
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  buttonPressed: {
+    backgroundColor: "#059669",
+  },
+  buttonIcon: {
+    width: 24,
+    height: 24,
+    marginRight: 8,
+  },
+  buttonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+});
