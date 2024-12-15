@@ -68,11 +68,7 @@ export default function ExploreScreen({ route }) {
           "SELECT hora, tipo, estado,descrip FROM T_05_REGISTRO_EVENTOS WHERE fecha = ? AND iduser = ?",
           [selectedDate, user.id]
         );
-<<<<<<< HEAD
         //console.log('ListaEventos :',results);
-=======
-        console.log('ListaEventos :',results);
->>>>>>> 461ad8135939ecec071d600c0ac741d1785430c6
         setEventsForSelectedDate(results);
       } catch (error) {
         console.error("Error al obtener eventos para la fecha seleccionada:", error);

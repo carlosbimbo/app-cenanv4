@@ -14,7 +14,6 @@ const Stack = createStackNavigator();
 export default function HomeScreeStackNav({ route }) {
     const { user } = route.params;
     console.log('HomeScreeStackNav user:', `HomeScreeStackNav usuarioid : ${user.id} - dni : ${user.dni}`);
-    
   return (
     <Stack.Navigator>
         <Stack.Screen name='home' component={HomeScreen} initialParams={{ user }}
