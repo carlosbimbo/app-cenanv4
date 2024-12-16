@@ -1,5 +1,5 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, TextInput, Pressable, Alert, Image,TouchableOpacity,KeyboardAvoidingView,ScrollView,FlatList } from 'react-native';
+import { SafeAreaView, Dimensions,StyleSheet, Text, View, TextInput, Pressable, Alert, Image,TouchableOpacity,KeyboardAvoidingView,ScrollView,FlatList } from 'react-native';
 import { SQLiteProvider, useSQLiteContext } from 'expo-sqlite';
 import * as Location from 'expo-location';
 import { NavigationContainer } from '@react-navigation/native';
@@ -1276,27 +1276,58 @@ const HomeScreen = ({navigation, route}) => {
         }, [db, user.id]);
       /////////////////////////////////////
       //Fin Add 08122024
-    
+      const screenWidth = Dimensions.get('window').width;
     return (
-        <View className="mt-3">
-        <Text className="bg-violet-100 p-4 text-black m-10 border border-solid border-green-900 rounded font-bold text-[17px] text-center">En base a la informacion que manejes seleciona una opcion para calcular tu edad gestacional</Text>
+      <SafeAreaView className="flex-1 bg-gray-100">
+      <View className="flex-1 justify-start items-center px-4">
+        {/* Título */}
+        <Text className="mb-4 font-extrabold text-center text-[17px] bg-gradient-to-r from-purple-100 to-violet-200 p-2 text-blue-800 border border-green-700 rounded-xl shadow-lg" style={{ marginTop: 40 }}>
+          <Text className="text-purple-700">
+            En base a la información que manejes selecciona una opción para calcular tu edad gestacional
+          </Text>
+        </Text>
+
+        {/* Lista de botones */}
         <FlatList
           data={filteredList}
           numColumns={1}
-          renderItem={({item,index})=>(
-            <TouchableOpacity 
-            onPress={() => handleNavigation(item.id)}
-            className="flex-1 items-center 
-            justify-center p-2 border-[1px] border-blue-600 
-            m-1 h-[150px] rounded-lg bg-blue-650 ">              
-              <Image source={imageMapping[item.id]}
-              className="w-[75px] h-[75px] "
+          contentContainerStyle={{
+            paddingVertical: 10, // Espaciado vertical dentro del contenedor
+            alignItems: 'center', // Centrar botones horizontalmente
+          }}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              onPress={() => handleNavigation(item.id)}
+              className="my-2 rounded-lg bg-blue-650"
+              style={{
+                width: screenWidth - 60, // El ancho de cada botón es el 100% del ancho de la pantalla menos 40px (margen)
+                height: 100, // Altura fija para todos los botones
+                borderWidth: 1, // Borde
+                borderColor: '#1E3A8A', // Color del borde (azul oscuro)
+                alignItems: 'center', // Centrar contenido horizontalmente
+                justifyContent: 'center', // Centrar contenido verticalmente
+                marginHorizontal: 0, // Márgenes laterales
+                marginBottom: 10, // Espaciado entre botones
+              }}
+            >
+              {/* Imagen */}
+              <Image
+                source={imageMapping[item.id]}
+                style={{
+                  width: 60, // Ancho fijo para todas las imágenes
+                  height: 60, // Altura fija para todas las imágenes
+                  marginBottom: 10, // Espacio entre imagen y texto
+                  resizeMode: 'contain',
+                }}
               />
-             <Text className="text-[14px] mt-1 font-bold">{item.title}</Text>
+              {/* Título */}
+              <Text className="text-[14px] font-bold text-center text-black">{item.title}</Text>
             </TouchableOpacity>
           )}
+          keyExtractor={(item) => item.id}
         />
-    </View>
+      </View>
+    </SafeAreaView>
     )
 }
 
@@ -1886,18 +1917,67 @@ const PartoScreen = ({navigation, route}) => {
                 return;
                 }
 
+                //calculo semanas y dias de embarazo add 16122024
+                const today = new Date(); 
+                const pastDate = new Date(selectedDate);
+                const difference = differenceInDays(pastDate,today);
+                console.log('Diferencia en días:', difference);
+             
+                const nrodiasaprox_parto = 280 - difference;
+                console.log('Nro Días Aprox parto:', nrodiasaprox_parto);
+
+                const weeks = Math.floor(nrodiasaprox_parto / 7);
+                const remainingDays = nrodiasaprox_parto % 7;
+                console.log('Diferencia en semanas:', weeks);
+                console.log('Días restantes:', remainingDays);
+                             
+                const fecrest = addDays(today, -nrodiasaprox_parto); // Restar los días
+
+                const newDate = addDays(fecrest, 281);
+                const cal_fecaprox_parto = format(newDate, 'dd/MM/yyyy');
+                console.log('Fecha calculada Aprox parto:', cal_fecaprox_parto);               
+                const fecinigesta = addDays(newDate, -280);
+                const fecsema1 = format(fecinigesta, 'yyyy-MM-dd');
+                console.log('Fecha inicio Gestacion Semana1 :', fecsema1);  
+                //Fin calculo semanas y dias de embarazo add 11122024
+
                 const valUserFpp = await db.getFirstAsync('SELECT * FROM T_05_ETAPA_GESTACIONAL WHERE id = ?', [user.id]);
                   
                     if(valUserFpp){
-                        const resultudp =   await db.runAsync('UPDATE T_05_ETAPA_GESTACIONAL SET fec_proba_parto = ? WHERE id = ?', [selectedDate,user.id]);                          
+                        const resultudp =   await db.runAsync('UPDATE T_05_ETAPA_GESTACIONAL SET fec_proba_parto = ?,calcu_nrosema = ?,calcu_nrodias = ?,calcu_nrodias_parto = ?,calcu_fecaprox_parto = ? WHERE id = ?', [selectedDate,weeks,remainingDays,nrodiasaprox_parto,cal_fecaprox_parto,user.id]);                          
                         Alert.alert('Correcto', 'Registro FPP Actualizado exitosamente!');      
-                        navigation.navigate('Home', {user:user});
+                        //navigation.navigate('Home', {user:user});
                     }else{   
-                        const resultins = await db.runAsync('INSERT INTO T_05_ETAPA_GESTACIONAL (id, fec_proba_parto) VALUES (?, ?)', [user.id, selectedDate]);
+                        const resultins = await db.runAsync('INSERT INTO T_05_ETAPA_GESTACIONAL (id, fec_proba_parto,calcu_nrosema,calcu_nrodias,calcu_nrodias_parto,calcu_fecaprox_parto) VALUES (?,?,?,?,?,?)', [user.id, selectedDate,weeks,remainingDays,nrodiasaprox_parto,cal_fecaprox_parto]);
                         Alert.alert('Correcto', 'Registro FPP Registrado exitosamente!');      
-                        navigation.navigate('Home', {user:user});                       
+                        //navigation.navigate('Home', {user:user});                       
                                                 
-                    }            
+                    } 
+                    
+                //grabando marcadores
+                const datmarkereg = await db.getFirstAsync('SELECT * FROM T_05_AGENDA_GESTACIONAL WHERE id = ?', [user.id]);
+                   
+                await db.runAsync('DELETE FROM T_05_AGENDA_GESTACIONAL WHERE id = $id', { $id: user.id });
+                console.log('Remove Agenda FPP:', 'RemoveAgenda FPP');
+                               
+                    //const startDate = new Date('2024-06-29'); 
+                    const startDate = new Date(fecsema1); 
+                    let currentDate = startDate;
+                    const weeksGestacion = 40; 
+                    //const results = [];
+                 
+                    for (let i = 1; i <= weeksGestacion; i++) {
+                      currentDate = addDays(currentDate, 7); 
+                      let sem_marker = format(currentDate, 'yyyy-MM-dd');
+                      const resinsagen = await db.runAsync('INSERT INTO T_05_AGENDA_GESTACIONAL (id,nrosem,fec_marker) VALUES (?,?,?)', [user.id, i ,sem_marker]);
+                      //results.push(format(currentDate, 'yyyy-MM-dd')); 
+                    }
+                    //console.log(results);
+                    console.log('inserte Agenda FPP:', 'INSAgenda FPP');
+                              
+              /////////////////Fin Add 10122024 Grabado marker semanas de embarazo para agenda/////////
+              //navigation.navigate('TabNavigator', {user:user});//comment for add hemoglobina 15122024
+              navigation.navigate('Hemoglo', {user:user});                 
 
                 } catch (error) {
                     console.log('Error durante el registro del FPP : ', error);

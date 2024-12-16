@@ -65,7 +65,7 @@ export default function ExploreScreen({ route }) {
     const fetchEventsByDate = async () => {
       try {
         const results = await db.getAllAsync(
-          "SELECT hora, tipo, estado,descrip FROM T_05_REGISTRO_EVENTOS WHERE fecha = ? AND iduser = ?",
+          "SELECT hora, tipo, alarma,descrip FROM T_05_REGISTRO_EVENTOS WHERE fecha = ? AND iduser = ?",
           [selectedDate, user.id]
         );
         //console.log('ListaEventos :',results);
@@ -144,7 +144,7 @@ export default function ExploreScreen({ route }) {
                 </Text>
                 <Text style={styles.eventText}>Hora: {event.descrip}</Text>
                 <Text style={styles.eventText}>
-                  Estado: {event.estado ? "Activo" : "Inactivo"}
+                  Estado: {event.alarma ? "Activo" : "Inactivo"}
                 </Text>
               </LinearGradient>
             ))
