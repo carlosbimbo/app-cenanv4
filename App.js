@@ -42,6 +42,7 @@ const initializeDatabase = async(db) => {
             PRAGMA journal_mode = WAL;
             CREATE TABLE IF NOT EXISTS T_05_ETAPA_GESTACIONAL (
                 id INTEGER PRIMARY KEY NOT NULL,
+                opcgesta INT NULL,
                 fur varchar(10) NULL,
                 fec_proba_parto varchar(10) NULL,
                 eco_nro_sem_emb INT NULL,
@@ -718,6 +719,19 @@ export default function App() {
                   options={{ title: 'Menu Principal' }}
                 />
 
+                <Stack.Screen name='Hemoglo' component={HemoScreen} options={{
+                    title: '',
+                    headerStyle: {
+                        backgroundColor: '#fff', // Color de fondo de la barra de navegación
+                        height: 70, // Ajusta la altura
+                    },
+                    headerTitleStyle: {
+                        fontSize: 18,
+                        fontWeight: 'bold',
+                        color: '#fff', // Color del título
+                    },
+                    }} />
+
             </Stack.Navigator>
         </NavigationContainer>
     </SQLiteProvider>
@@ -1128,6 +1142,7 @@ const RegisterScreen = ({navigation}) => {
 //HomeScreen component
 const HomeScreen = ({navigation, route}) => {
     const db = useSQLiteContext();
+    const { user } = route.params;
     const categoryList = [
         {
           id: '1',
@@ -1143,18 +1158,48 @@ const HomeScreen = ({navigation, route}) => {
         },
       ];
       
-      const { user } = route.params;
+      const [opcgesta, setOpcgesta] = useState(''); // Estado para el valor de hemoglobina
+      
+      useEffect(() => {
+        const loadOpcgesta = async () => {
+          try {
+            const result = await db.getFirstAsync(
+              'SELECT opcgesta FROM T_05_ETAPA_GESTACIONAL WHERE id = ?',
+              [user.id]
+            );
+            if (result?.opcgesta) {
+              setOpcgesta(result.opcgesta.toString());
+            }
+          } catch (error) {
+            console.log('Error al cargar la opcgesta:', error);
+          }
+        };
+    
+        loadOpcgesta();
+      }, [db, user.id]);
+
+      console.log('loadOpcgesta xxx: : ',opcgesta);
+      let filteredList;      
+      if (!opcgesta || isNaN(opcgesta) || opcgesta=='') {
+        filteredList = categoryList;
+      }else{
+        filteredList = categoryList.filter(item => item.id === opcgesta);
+      }
+      
 
       const handleNavigation = (id) => {
         switch (id) {
           case '1':
             navigation.navigate('Fur',{user : user});
+            handleOpcionGesta('1');
             break;
           case '2':
             navigation.navigate('Eco',{user : user});
+            handleOpcionGesta('2');
             break;          
           case '3':
             navigation.navigate('Parto',{user : user});
+            handleOpcionGesta('3');
             break;     
           default:
             console.log('Opción no válida');
@@ -1162,6 +1207,31 @@ const HomeScreen = ({navigation, route}) => {
       };
 
     //we'll extract the user parameter from route.params
+    const handleOpcionGesta = async(opc) => {   
+          try {
+            console.log('handleOpcionGesta pa grabar miraa : ',opc);
+           
+            const existsgesta = await db.getFirstAsync(
+              'SELECT opcgesta FROM T_05_ETAPA_GESTACIONAL WHERE id = ?',
+              [user.id]
+            );
+
+            if (existsgesta) {
+              await db.runAsync(
+                'UPDATE T_05_ETAPA_GESTACIONAL SET opcgesta = ? WHERE id = ?',
+                [opc, user.id]
+              );             
+            } else {
+              await db.runAsync(
+                'INSERT INTO T_05_ETAPA_GESTACIONAL (id, opcgesta) VALUES (?, ?)',
+                [user.id, opc]
+              );             
+            }
+          
+          } catch (error) {
+            console.log('Error durante el registro de handleOpcionGesta:', error);
+          }
+        }
     
     //navigation.navigate('Home', {user : userName});
 
@@ -1211,7 +1281,7 @@ const HomeScreen = ({navigation, route}) => {
         <View className="mt-3">
         <Text className="bg-violet-100 p-4 text-black m-10 border border-solid border-green-900 rounded font-bold text-[17px] text-center">En base a la informacion que manejes seleciona una opcion para calcular tu edad gestacional</Text>
         <FlatList
-          data={categoryList}
+          data={filteredList}
           numColumns={1}
           renderItem={({item,index})=>(
             <TouchableOpacity 
@@ -1392,7 +1462,8 @@ const FurScreen = ({navigation, route}) => {
                           console.log('inserte Agenda:', 'INSAgenda');
                                     
                     /////////////////Fin Add 10122024 Grabado marker semanas de embarazo para agenda/////////
-                    navigation.navigate('TabNavigator', {user:user});
+                    //navigation.navigate('TabNavigator', {user:user});//comment for add hemoglobina 15122024
+                    navigation.navigate('Hemoglo', {user:user});                             
 
                 } catch (error) {
                     console.log('Error durante el registro del FUR : ', error);
@@ -1921,6 +1992,144 @@ const PartoScreen = ({navigation, route}) => {
     )   
 }
 
+const HemoScreen = ({ navigation, route }) => {
+  const db = useSQLiteContext();
+  const { user } = route.params;
+
+  const [hemoglo, setHemoglo] = useState(''); // Estado para el valor de hemoglobina
+  const [isPressed, setIsPressed] = useState(false);
+
+  // Cargar el valor de hemoglobina al entrar a la pantalla
+  useEffect(() => {
+    const loadHemoglo = async () => {
+      try {
+        const result = await db.getFirstAsync(
+          'SELECT hemoglo FROM T_05_ETAPA_GESTACIONAL WHERE id = ?',
+          [user.id]
+        );
+        if (result?.hemoglo) {
+          setHemoglo(result.hemoglo.toString());
+        }
+      } catch (error) {
+        console.log('Error al cargar la hemoglobina:', error);
+      }
+    };
+
+    loadHemoglo();
+  }, [db, user.id]);
+
+  useEffect(() => {
+    if (hemogloref.current) {
+      hemogloref.current.focus();
+      setFocusedInput('hemoglo'); 
+    }
+  }, []);
+
+  // Guardar o actualizar el valor de hemoglobina
+  const handleRegiHemo = async () => {
+    if (!hemoglo || isNaN(parseFloat(hemoglo))) {
+      Alert.alert('Error', 'Por favor, ingrese un valor válido para la hemoglobina.');
+      hemogloref.current.focus();
+      setFocusedInput('hemoglo'); 
+      return;
+    }
+  
+    try {
+      const existingRecord = await db.getFirstAsync(
+        'SELECT * FROM T_05_ETAPA_GESTACIONAL WHERE id = ?',
+        [user.id]
+      );
+
+      if (existingRecord) {
+        await db.runAsync(
+          'UPDATE T_05_ETAPA_GESTACIONAL SET hemoglo = ? WHERE id = ?',
+          [parseFloat(hemoglo), user.id]
+        );
+        Alert.alert('Correcto', 'Registro de hemoglobina actualizado exitosamente.');
+      } else {
+        await db.runAsync(
+          'INSERT INTO T_05_ETAPA_GESTACIONAL (id, hemoglo) VALUES (?, ?)',
+          [user.id, parseFloat(hemoglo)]
+        );
+        Alert.alert('Correcto', 'Registro de hemoglobina guardado exitosamente.');
+      }
+
+      navigation.navigate('TabNavigator', { user });
+    } catch (error) {
+      console.log('Error durante el registro de hemoglobina:', error);
+    }
+  };
+
+  const [focusedInput, setFocusedInput] = useState(null); 
+  const hemogloref = useRef(null);
+
+  return (
+    <View style={styles.containerhemoglo}>
+      <Text className="mb-4 font-extrabold text-center text-[17px] bg-gradient-to-r from-purple-100 to-violet-200 p-2 text-blue-800 border border-green-700 rounded-xl shadow-lg">
+        <Text className="text-purple-700">
+          Ingresa el valor de su hemoglobina {"\n"}
+          (sin ajuste por su altitud) {"\n"}
+          brindado por su obstetra en su última cita.
+        </Text>
+      </Text>
+
+      <TextInput
+          className="w-3/4 p-3 border border-gray-300 rounded-lg text-center text-lg"
+          ref={hemogloref} // Asignar la referencia         
+                style={[
+                  styles.input,
+                  focusedInput === 'hemoglo' && styles.inputFocused,
+                ]}
+          placeholder="Ejemplo: 12.5"
+          keyboardType="decimal-pad"
+          value={hemoglo}
+          onChangeText={(text) => {
+            // Validar y formatear el texto ingresado
+            const formattedText = text
+              .replace(/[^0-9.]/g, '') // Permitir solo números y un punto decimal
+              .replace(/(\..*?)\..*/g, '$1'); // Evitar más de un punto decimal
+
+            // Limitar a dos decimales
+            const [integer, decimal] = formattedText.split('.');
+            if (decimal?.length > 2) {
+              setHemoglo(`${integer}.${decimal.slice(0, 2)}`);
+            } else {
+              setHemoglo(formattedText);
+            }
+          }}
+          onFocus={() => setFocusedInput('hemoglo')}
+          onBlur={() => setFocusedInput(null)}
+        />
+
+      <TouchableOpacity
+        onPress={handleRegiHemo}
+        onPressIn={() => setIsPressed(true)}
+        onPressOut={() => setIsPressed(false)}
+        className={`flex-row items-center justify-center rounded-lg ${
+          isPressed ? 'bg-blue-700' : 'bg-blue-500'
+        }`}
+        style={{
+          width: '70%',
+          height: 50,
+          marginTop: 20,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.25,
+          shadowRadius: 3.84,
+          elevation: 5,
+        }}
+        activeOpacity={0.8}
+      >
+        <Image
+          source={iconsave}
+          className="w-8 h-8 mr-2"
+          resizeMode="contain"
+        />
+        <Text className="text-white font-semibold text-base">Guardar</Text>
+      </TouchableOpacity>
+    </View>
+  );
+};
 
 const styles = StyleSheet.create({
     containerAdjusted: {
@@ -2026,6 +2235,13 @@ containerCalendar: {
     alignItems: 'center',    
     paddingHorizontal: 10,
     marginBottom: 100,
+  }, containerhemoglo: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    paddingHorizontal: 10,
+    marginBottom: 200,
   },
   
 });
