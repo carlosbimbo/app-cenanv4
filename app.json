@@ -2,7 +2,7 @@
   "expo": {
     "name": "app-cenanv4",
     "slug": "app-cenanv4",
-    "version": "1.1.0",
+    "version": "1.1.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -25,7 +25,8 @@
         "googleMaps": {
           "apiKey": "AIzaSyCSo_1eJlDb9mg_562DrKycx7whCrRopSM"
         }
-      },"permissions": [
+      },
+      "permissions": [
         "INTERNET",
         "ACCESS_NETWORK_STATE",
         "ACCESS_WIFI_STATE",
@@ -38,8 +39,9 @@
         "GET_TASKS",
         "CHANGE_WIFI_STATE",
         "CAMERA",
-        "MEDIA_LIBRARY"       
-      ],"package": "com.bimbo.appcenanv4"
+        "MEDIA_LIBRARY"
+      ],
+      "package": "com.bimbo.appcenanv4"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -72,10 +74,22 @@
           "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera",
           "photosPermission": "The app accesses your photos to let you share them with your friends."
         }
-      ],[
+      ],
+      [
         "expo-screen-orientation",
         {
           "initialOrientation": "DEFAULT"
+        }
+      ],
+      "expo-router",
+      [
+      "expo-build-properties",
+      {
+        "android": {
+          "enableProguardInReleaseBuilds": true,
+          "enableShrinkResourcesInReleaseBuilds": true,
+          "useLegacyPackaging": true
+        }
         }
       ]
     ]
