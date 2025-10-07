@@ -83,15 +83,16 @@
       ],
       "expo-router",
       [
-      "expo-build-properties",
-      {
-        "android": {
-          "enableProguardInReleaseBuilds": true,
-          "enableShrinkResourcesInReleaseBuilds": true,
-          "useLegacyPackaging": true
+        "expo-build-properties",
+        {
+          "android": {
+            "enableProguardInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true,
+            "useLegacyPackaging": true
+          }
         }
-        }
-      ]
+      ],
+      "expo-background-task"
     ]
   }
 }

@@ -38,7 +38,7 @@ export default function MapsDetail({ route }) {
       const fetchMarkers = async () => {
         try {
 
-          const ressultuser = await db.getAllAsync('SELECT 700 AS id_eess,"MI CASA : ' + user.nombape + ' - ' + user.dni + '" as nombre_eess,lati_viv as gps_lat,longi_viv as gps_lon,"" as dir_eess FROM users WHERE id = ?', [user.id]);
+          const ressultuser = await db.getAllAsync('SELECT 700 AS id_eess,"MI CASA : ' + user.nombape + ' - ' + user.dni + '" as nombre_eess,COALESCE(lati_viv, lati) as gps_lat,COALESCE(longi_viv, longi) as gps_lon,"" as dir_eess FROM users WHERE id = ?', [user.id]);
           const results = await db.getAllAsync('SELECT id_eess,nombre_eess,gps_lat,gps_lon,dir_eess FROM T_LECT_EESS');
           const combinedResult = ressultuser.concat(results);
           //console.log(combinedResult);  

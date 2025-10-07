@@ -19,6 +19,7 @@ import Iconlogin from 'react-native-vector-icons/MaterialIcons';
 import FlotaButton from './Apps/Components/Views/FlotaButton'
 import { addDays, format,differenceInDays } from 'date-fns';
 import Constants from 'expo-constants';
+import { registerBackgroundSync } from "./Apps/Services/syncTask";
 
 //initialize the database
 const initializeDatabase = async(db) => {
@@ -707,6 +708,9 @@ const Stack = createStackNavigator();
 //We'll have 3 screens : Login, Register and Home
 
 export default function App() {
+  useEffect(() => {
+    registerBackgroundSync();
+  }, []);
   return (
     <SQLiteProvider databaseName='auth.db' onInit={initializeDatabase}>
         <NavigationContainer>
