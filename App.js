@@ -19,7 +19,9 @@ import Iconlogin from 'react-native-vector-icons/MaterialIcons';
 import FlotaButton from './Apps/Components/Views/FlotaButton'
 import { addDays, format,differenceInDays } from 'date-fns';
 import Constants from 'expo-constants';
+import * as Notifications from "expo-notifications";
 import { registerBackgroundSync } from "./Apps/Services/syncTask";
+
 
 //initialize the database
 const initializeDatabase = async(db) => {
@@ -708,8 +710,18 @@ const Stack = createStackNavigator();
 //We'll have 3 screens : Login, Register and Home
 
 export default function App() {
-  useEffect(() => {
-    registerBackgroundSync();
+   useEffect(() => {
+    (async () => {
+      // 🔔 Pedir permiso de notificaciones
+      const { status } = await Notifications.requestPermissionsAsync();
+      if (status !== "granted") {
+        console.warn("⚠️ Permisos de notificación no otorgados");
+        return;
+      }
+
+      // 🚀 Registrar tarea de sincronización
+      await registerBackgroundSync();
+    })();
   }, []);
   return (
     <SQLiteProvider databaseName='auth.db' onInit={initializeDatabase}>
