@@ -2,7 +2,7 @@
   "expo": {
     "name": "app-cenanv4",
     "slug": "app-cenanv4",
-    "version": "1.1.1",
+    "version": "1.2.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -92,7 +92,8 @@
           }
         }
       ],
-      "expo-background-task"
+      "expo-background-task",
+      "expo-secure-store"
     ]
   }
 }

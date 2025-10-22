@@ -33,14 +33,14 @@ const VideoList = ({ user }) => {
     //
     const fetchResumentakesuple = useCallback(async () => {
       try {        
-        const rstakesupl = await db.getAllAsync(`
+        const query = `
         SELECT 
             R.iduser, R.nro_sema_combinado, R.video_group, R.total_score_sumado, R.nrosemas_actual, 
             R.show_video, R.video_premio_desc, R.video_premio_ruta,R.video_premio_codigoid, R.orden_video
         FROM (
             SELECT 
-                ${user.id} as iduser, '13' as nro_sema_combinado, 13 as video_group, 210 as total_score_sumado, 
-                (select (case when calcu_nrodias > 0 then (calcu_nrosema + 1) else calcu_nrosema end) as nrosemas_actual from T_05_ETAPA_GESTACIONAL where id = ${user.id} limit 1) as nrosemas_actual, 1 as show_video, video_premio_desc, video_premio_ruta,video_premio_codigoid, 1 as orden_video 
+                ? as iduser, '13' as nro_sema_combinado, 13 as video_group, 210 as total_score_sumado, 
+                (select (case when calcu_nrodias > 0 then (calcu_nrosema + 1) else calcu_nrosema end) as nrosemas_actual from T_05_ETAPA_GESTACIONAL where id = ? limit 1) as nrosemas_actual, 1 as show_video, video_premio_desc, video_premio_ruta,video_premio_codigoid, 1 as orden_video 
             FROM T_LECT_SEMANAS 
             WHERE nro_semana = 13
             UNION ALL
@@ -76,11 +76,11 @@ const VideoList = ({ user }) => {
                                     AS nrosemas_actual
                                 FROM T_05_REGISTRO_SUPLEMENTOS X
                                 JOIN T_05_ETAPA_GESTACIONAL Y ON Y.id = X.iduser  
-                                WHERE X.iduser = ${user.id} AND X.fecha <= DATE('now', '-5 hours') 
+                                WHERE X.iduser = ? AND X.fecha <= DATE('now', '-5 hours') 
                                 GROUP BY X.fecha
                             ) AS T
                             JOIN T_05_DIAS_GESTACION Z ON T.iduser = Z.iduser AND T.fecha = Z.fec_diagesta AND T.nro_sema = Z.nroseman
-                            WHERE T.iduser = ${user.id}
+                            WHERE T.iduser = ?
                         ) AS W
                         JOIN T_LECT_SEMANAS S ON S.nro_semana = W.nro_sema
                         GROUP BY W.iduser, W.nro_sema, S.video_group
@@ -92,7 +92,14 @@ const VideoList = ({ user }) => {
             WHERE U.show_video = 1
         ) AS R
         ORDER BY R.orden_video DESC, R.video_group DESC;
-        `);
+        `;
+
+        const rstakesupl = await db.getAllAsync(query, [
+          user.id,
+          user.id,
+          user.id,
+          user.id
+        ]);  
   
         //console.log('Resumen tomo suplementos fetchResumentakesuple:', rstakesupl);
         setVideos(rstakesupl);
@@ -205,7 +212,7 @@ export default function RecompensasList({ route }) {
   const fetchDaysgestaall = useCallback(async () => {
     try {
          
-      const results = await db.getAllAsync(`
+      const query = `
       SELECT 
       R.iduser, R.nro_sema_combinado, R.total_score_sumado, R.nrosemas_actual,						
       CASE
@@ -273,11 +280,11 @@ export default function RecompensasList({ route }) {
                               AS nrosemas_actual
                           FROM T_05_REGISTRO_SUPLEMENTOS X
                           JOIN T_05_ETAPA_GESTACIONAL Y ON Y.id = X.iduser  
-                          WHERE X.iduser = ${user.id} AND X.fecha <= DATE('now', '-5 hours') 
+                          WHERE X.iduser = ? AND X.fecha <= DATE('now', '-5 hours') 
                           GROUP BY X.fecha
                       ) AS T
                       JOIN T_05_DIAS_GESTACION Z ON T.iduser = Z.iduser AND T.fecha = Z.fec_diagesta AND T.nro_sema = Z.nroseman
-                      WHERE T.iduser = ${user.id}
+                      WHERE T.iduser = ?
                   ) AS W
                   JOIN T_LECT_SEMANAS S ON S.nro_semana = W.nro_sema
                   GROUP BY W.iduser, W.nro_sema, S.video_group
@@ -289,7 +296,12 @@ export default function RecompensasList({ route }) {
       WHERE RTRIM(U.nrosemas_actual) IN (RTRIM(U.nro_sema_combinado))
   ) AS R
   ORDER BY R.orden_video DESC, R.video_group DESC;
-      `);        
+      `;        
+
+      const results = await db.getAllAsync(query, [
+        user.id, 
+        user.id
+      ]);
       
       console.log('Datos de la todos los dias de gestacion KKKA fetchDaysgestaall :', results);
       setProgressValue(results);

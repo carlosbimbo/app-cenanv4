@@ -21,7 +21,11 @@ import { addDays, format,differenceInDays } from 'date-fns';
 import Constants from 'expo-constants';
 import * as Notifications from "expo-notifications";
 import { registerBackgroundSync } from "./Apps/Services/syncTask";
-
+import { NetworkProvider } from "./Apps/Context/NetworkContext";
+import { NetworkBanner } from "./Apps/Components/Views/NetworkBanner";
+import { apiFetch } from './Apps/Services/api';
+import * as SecureStore from 'expo-secure-store';
+import * as Crypto from 'expo-crypto';
 
 //initialize the database
 const initializeDatabase = async(db) => {
@@ -29,7 +33,7 @@ const initializeDatabase = async(db) => {
         await db.execAsync(`
             PRAGMA journal_mode = WAL;
             CREATE TABLE IF NOT EXISTS users (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                id TEXT PRIMARY KEY,
                 username varchar(100) UNIQUE,
                 password varchar(10),
                 dni varchar(8),
@@ -47,7 +51,7 @@ const initializeDatabase = async(db) => {
         await db.execAsync(`
             PRAGMA journal_mode = WAL;
             CREATE TABLE IF NOT EXISTS T_05_ETAPA_GESTACIONAL (
-                id INTEGER PRIMARY KEY NOT NULL,
+                id TEXT PRIMARY KEY NOT NULL,
                 opcgesta INT NULL,
                 fur varchar(10) NULL,
                 fec_proba_parto varchar(10) NULL,
@@ -64,7 +68,7 @@ const initializeDatabase = async(db) => {
         await db.execAsync(`
             PRAGMA journal_mode = WAL;
             CREATE TABLE IF NOT EXISTS T_05_AGENDA_GESTACIONAL (
-                id INT NOT NULL,                
+                id TEXT NOT NULL,                
                 nrosem INT NOT NULL,
                 fec_marker varchar(10) NULL,
                 PRIMARY KEY (id, nrosem)                
@@ -75,7 +79,7 @@ const initializeDatabase = async(db) => {
         PRAGMA journal_mode = WAL;
         CREATE TABLE IF NOT EXISTS T_05_DIAS_GESTACION (
             id_diasg INTEGER PRIMARY KEY NOT NULL,
-            iduser INT NOT NULL,                
+            iduser TEXT NOT NULL,                
             nroseman INT NOT NULL,
             fec_seman varchar(10) NULL,
             fec_diagesta varchar(10) NULL               
@@ -675,7 +679,7 @@ const initializeDatabase = async(db) => {
           PRAGMA journal_mode = WAL;
           CREATE TABLE IF NOT EXISTS T_05_REGISTRO_EVENTOS (
               ideven INTEGER PRIMARY KEY AUTOINCREMENT,
-              iduser INT NOT NULL,
+              iduser TEXT NOT NULL,
               tipo INT NULL,
               fecha varchar(10),
               hora varchar(10),
@@ -689,7 +693,7 @@ const initializeDatabase = async(db) => {
           PRAGMA journal_mode = WAL;
           CREATE TABLE IF NOT EXISTS T_05_REGISTRO_SUPLEMENTOS (
               idsuple INTEGER PRIMARY KEY AUTOINCREMENT,
-              iduser INT NOT NULL,              
+              iduser TEXT NOT NULL,              
               fecha varchar(10) NOT NULL,
               tipo_suple INT NULL,
               foto varchar(100) NULL,
@@ -724,7 +728,9 @@ export default function App() {
     })();
   }, []);
   return (
-    <SQLiteProvider databaseName='auth.db' onInit={initializeDatabase}>
+    <NetworkProvider>
+      <NetworkBanner />
+      <SQLiteProvider databaseName='auth.db' onInit={initializeDatabase}>
         <NavigationContainer>
             <Stack.Navigator initialRouteName='Login'>
                 <Stack.Screen name='Login' component={LoginScreen} options={{
@@ -785,7 +791,8 @@ export default function App() {
 
             </Stack.Navigator>
         </NavigationContainer>
-    </SQLiteProvider>
+      </SQLiteProvider>
+    </NetworkProvider>
   );
 }
 
@@ -841,7 +848,35 @@ const LoginScreen = ({navigation}) => {
                 return;
             }
             const validUser = await db.getFirstAsync('SELECT id,LOWER(username) as username,password,dni,nombape,lati,longi,altura,lati_viv,longi_viv,altura_viv,profileImage FROM users WHERE LOWER(username) = ? AND password = ?', [userName.toLowerCase(), password]);
+            
             if(validUser) {
+
+              const cleanData = Object.fromEntries(
+                Object.entries(validUser).filter(([_, v]) => v != null && v !== '')
+              );
+			  
+              const result = await apiFetch('/newuserfirstsign', {
+                                method: 'POST',
+                                body: JSON.stringify(cleanData),
+                              });	
+            let responselogi;                              	
+            if (result?.status === 'OK' && result?.data?.createdPerson) {
+              console.log('Usuario logueado se guardo en postgres :',validUser);
+                responselogi = await apiFetch('/signin', {
+                method: 'POST',
+                body: JSON.stringify({
+                  username: userName.toLowerCase(),
+                  password: password,
+                }),
+              });
+            }
+
+              if (responselogi?.token) {
+                await SecureStore.deleteItemAsync('authToken');
+                await SecureStore.setItemAsync('authToken', responselogi.token);
+                console.log('✅ Token guardado con éxito');
+              }
+
                 //Alert.alert('Correcto', `Login Exitoso ${validUser.id}`);
                 Alert.alert('Correcto', `Login Exitoso`);
                 navigation.navigate('Home', {user:validUser});
@@ -1096,7 +1131,7 @@ const RegisterScreen = ({navigation}) => {
               return;
              }
 
-            const existingUser = await db.getFirstAsync('SELECT * FROM users WHERE username = ?', [userName]);
+            const existingUser = await db.getFirstAsync('SELECT * FROM users WHERE username = ?', [userName.toLowerCase()]);
             if (existingUser) {
                 Alert.alert('Error', 'Usuario ya existe.');
                 emailRef.current.focus(); // Enfocar automáticamente
@@ -1104,7 +1139,73 @@ const RegisterScreen = ({navigation}) => {
                 return;             
             }
          
-            const result = await db.runAsync('INSERT INTO users (username, password,dni,nombape,lati,longi,altura) VALUES (?, ?,?, ?, ?,?, ?)', [userName.toLowerCase(), password,userDni,userNomb,latitude,longitude,altitude]);
+            /*
+            const vid = await Crypto.randomUUID();
+            console.log('vid generado :',vid);
+            const result = await db.runAsync('INSERT INTO users (id,username, password,dni,nombape,lati,longi,altura) VALUES (?,?, ?,?, ?, ?,?, ?)', [vid,userName.toLowerCase(), password,userDni,userNomb,latitude,longitude,altitude]);
+            */
+            
+            //add nuevo  grabado a postgres 21102025
+            // 1️⃣ Generar ID único
+              const vid = await Crypto.randomUUID();
+              console.log('vid generado:', vid);
+
+              // 2️⃣ Construir objeto de usuario
+              const userData = {
+                id: vid,
+                username: userName.toLowerCase(),
+                password,
+                dni: userDni,
+                nombape: userNomb,
+                lati: latitude?.toString() || null,
+                longi: longitude?.toString() || null,
+                altura: altitude?.toString() || null,
+                lati_viv: '',
+                longi_viv: '',
+                altura_viv: '',
+                profileimage: '',
+              };
+
+              const cleanData = Object.fromEntries(
+                Object.entries(userData).filter(([_, v]) => v != null && v !== '')
+              );
+
+              const columns = Object.keys(cleanData).join(', ');
+              const placeholders = Object.keys(cleanData).map(() => '?').join(', ');
+              const values = Object.values(cleanData);
+
+              await db.runAsync(`INSERT INTO users (${columns}) VALUES (${placeholders})`, values);
+              console.log('Usuario guardado localmente:', cleanData);
+                
+                try {
+                  const result = await apiFetch('/newuserfirstsign', {
+                    method: 'POST',
+                    body: JSON.stringify(cleanData),
+                  });
+
+                  console.log('✅ Usuario sincronizado con el servidor:', result);
+                } catch (err) {
+                  console.error('❌ Error al sincronizar usuario:', err);
+                  Alert.alert('Error', 'No se pudo sincronizar con el servidor.');
+                  return;
+                }
+
+                const responselogi = await apiFetch('/signin', {
+                  method: 'POST',
+                  body: JSON.stringify({
+                    username: userName,
+                    password: password,
+                  }),
+                });
+
+                if (responselogi?.token) {
+                  await SecureStore.setItemAsync('authToken', responselogi.token);
+                  console.log('✅ Token guardado con éxito');
+                }
+              
+
+            //fin add nuevo  grabado a postgres 21102025
+            
             Alert.alert('Correcto', 'Registro Completado exitosamente!');
             //const insertedId = result.lastInsertRowId;
             //Alert.alert('Correcto', `Registro completado exitosamente! ID: ${insertedId}`);

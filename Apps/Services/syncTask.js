@@ -2,6 +2,7 @@ import * as TaskManager from "expo-task-manager";
 import * as BackgroundFetch from "expo-background-fetch";
 import * as Notifications from "expo-notifications";
 import { openDatabaseSync } from "expo-sqlite";
+import * as SecureStore from 'expo-secure-store';
 
 // Nombre de la tarea
 const TASK_NAME = "SYNC_TASK";
@@ -64,10 +65,14 @@ TaskManager.defineTask(TASK_NAME, async () => {
     console.log(`📤 [${now}] ${registros.length} registros encontrados`);
     logCallback?.(`📤 [${now}] ${registros.length} registros encontrados`);
 
+    const token = await SecureStore.getItemAsync('authToken');
+
+    console.log(`📤 [${now}] ${token} es mi toen de usuario`);
+
     await Notifications.scheduleNotificationAsync({
       content: {
         title: "✅ Sincronización exitosa",
-        body: `${registros.length} registros procesados correctamente.`,
+        body: `${registros.length} registros procesados correctamente.${token}`,
       },
       trigger: null,
     });
