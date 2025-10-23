@@ -886,7 +886,7 @@ const LoginScreen = ({navigation}) => {
                 Alert.alert('Error', 'Password Incorrecto');
             }
         } catch (error) {
-            console.log('Error durante el Login : ', error);
+            console.log('Error durante el Loginxx : ', error);
         }
     }
 
@@ -1185,8 +1185,9 @@ const RegisterScreen = ({navigation}) => {
 
                   console.log('✅ Usuario sincronizado con el servidor:', result);
                 } catch (err) {
-                  console.error('❌ Error al sincronizar usuario:', err);
-                  Alert.alert('Error', 'No se pudo sincronizar con el servidor.');
+                  console.log('❌ Error al sincronizar usuario:', err);
+                  //console.error('❌ Error al sincronizar usuario:', err);
+                  //Alert.alert('Error', 'No se pudo sincronizar con el servidor.');
                   return;
                 }
 

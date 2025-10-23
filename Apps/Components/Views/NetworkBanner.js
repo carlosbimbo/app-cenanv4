@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from "react";
 import { View, Text } from "react-native";
-import { NetworkContext } from "../Context/NetworkContext";
+import { NetworkContext } from "../../Context/NetworkContext";
 import { WifiOff, Wifi } from "lucide-react-native";
 import { MotiView, AnimatePresence } from "moti";
 
