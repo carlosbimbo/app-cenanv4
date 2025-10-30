@@ -21,7 +21,7 @@ import { addDays, format,differenceInDays } from 'date-fns';
 import Constants from 'expo-constants';
 import * as Notifications from "expo-notifications";
 import { registerBackgroundSync } from "./Apps/Services/syncTask";
-import { NetworkProvider } from "./Apps/Context/NetworkContext";
+import { NetworkProvider,getCurrentNetworkState } from "./Apps/Context/NetworkContext";
 import { NetworkBanner } from "./Apps/Components/Views/NetworkBanner";
 import { apiFetch } from './Apps/Services/api';
 import * as SecureStore from 'expo-secure-store';
@@ -798,7 +798,7 @@ export default function App() {
 
 //LoginScreen component
 const LoginScreen = ({navigation}) => {
-
+  const { isConnected, isInternetReachable } = getCurrentNetworkState();
     const db = useSQLiteContext();
     const [userName, setUserName] = useState('');
     const [password, setPassword] = useState('');
@@ -850,7 +850,12 @@ const LoginScreen = ({navigation}) => {
             const validUser = await db.getFirstAsync('SELECT id,LOWER(username) as username,password,dni,nombape,lati,longi,altura,lati_viv,longi_viv,altura_viv,profileImage FROM users WHERE LOWER(username) = ? AND password = ?', [userName.toLowerCase(), password]);
             
             if(validUser) {
-
+              console.log('isConnected mira :',isConnected); 
+              Alert.alert('isConnected mira', isConnected);
+              if (isConnected || isInternetReachable) {
+              console.log('Conectado a Internet :'); 
+              Alert.alert('Conectado a Internet', isConnected);
+                
               const cleanData = Object.fromEntries(
                 Object.entries(validUser).filter(([_, v]) => v != null && v !== '')
               );
@@ -859,6 +864,7 @@ const LoginScreen = ({navigation}) => {
                                 method: 'POST',
                                 body: JSON.stringify(cleanData),
                               });	
+            console.log('mira loguio resultzzzz cayo : ',result);
             let responselogi;                              	
             if (result?.status === 'OK' && result?.data?.createdPerson) {
               console.log('Usuario logueado se guardo en postgres :',validUser);
@@ -876,6 +882,8 @@ const LoginScreen = ({navigation}) => {
                 await SecureStore.setItemAsync('authToken', responselogi.token);
                 console.log('✅ Token guardado con éxito');
               }
+
+            }
 
                 //Alert.alert('Correcto', `Login Exitoso ${validUser.id}`);
                 Alert.alert('Correcto', `Login Exitoso`);
@@ -985,6 +993,7 @@ const LoginScreen = ({navigation}) => {
 
 //RegisterScreenComponent
 const RegisterScreen = ({navigation}) => {
+  const { isConnected, isInternetReachable } = getCurrentNetworkState();
 
     const db = useSQLiteContext();
     const [userName, setUserName] = useState('');
@@ -1136,6 +1145,7 @@ const RegisterScreen = ({navigation}) => {
                 Alert.alert('Error', 'Usuario ya existe.');
                 emailRef.current.focus(); // Enfocar automáticamente
                 setFocusedInput('userName'); // Resaltar el campo
+                navigation.navigate('Login');
                 return;             
             }
          
@@ -1145,6 +1155,12 @@ const RegisterScreen = ({navigation}) => {
             const result = await db.runAsync('INSERT INTO users (id,username, password,dni,nombape,lati,longi,altura) VALUES (?,?, ?,?, ?, ?,?, ?)', [vid,userName.toLowerCase(), password,userDni,userNomb,latitude,longitude,altitude]);
             */
             
+            console.log('isConnected mira :',isConnected); 
+            Alert.alert('isConnected mira', isConnected);
+          if (isConnected || isInternetReachable) {
+            console.log('Conectado a Internet :'); 
+            Alert.alert('Conectado a Internet', isConnected);
+
             //add nuevo  grabado a postgres 21102025
             // 1️⃣ Generar ID único
               const vid = await Crypto.randomUUID();
@@ -1203,7 +1219,7 @@ const RegisterScreen = ({navigation}) => {
                   await SecureStore.setItemAsync('authToken', responselogi.token);
                   console.log('✅ Token guardado con éxito');
                 }
-              
+          }
 
             //fin add nuevo  grabado a postgres 21102025
             
