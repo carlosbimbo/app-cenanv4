@@ -3,6 +3,8 @@ import * as BackgroundFetch from "expo-background-fetch";
 import * as Notifications from "expo-notifications";
 import { openDatabaseSync } from "expo-sqlite";
 import * as SecureStore from 'expo-secure-store';
+import { getCurrentNetworkState } from "../Context/NetworkContext";
+import { apiFetch } from './api';
 
 // Nombre de la tarea
 const TASK_NAME = "SYNC_TASK";
@@ -25,6 +27,9 @@ Notifications.setNotificationHandler({
 
 // 🧩 Definición de la tarea
 TaskManager.defineTask(TASK_NAME, async () => {
+  const { isConnected, isInternetReachable } = getCurrentNetworkState();
+  console.log(isConnected);
+  if (isConnected || isInternetReachable) {
   try {
     const now = new Date().toLocaleTimeString();
     const startMsg = `🔄 [${now}] Ejecutando tarea de sincronización...`;
@@ -41,38 +46,57 @@ TaskManager.defineTask(TASK_NAME, async () => {
     });
 
     // ✅ Consulta usando getAllAsync (más segura que execAsync)
-    const registros = await db.getAllAsync(
-      "SELECT id, dni, nombape FROM users"
+    const registrosusers = await db.getAllAsync(
+      "SELECT * FROM users"
     );
 
-    if (!registros || registros.length === 0) {
-      const msg = `✅ [${now}] No hay registros pendientes`;
+    /*if (!registrosusers || registrosusers.length === 0) {
+      const msg = `✅ [${now}] No hay registrosusers pendientes`;
       console.log(msg);
       logCallback?.(msg);
 
       await Notifications.scheduleNotificationAsync({
         content: {
           title: "✅ Sincronización completa",
-          body: "No hay registros pendientes.",
+          body: "No hay registrosusers pendientes.",
         },
         trigger: null,
       });
 
       return BackgroundFetch.BackgroundFetchResult.NoData;
-    }
+    }*/
 
     // Aquí podrías enviar datos reales al servidor (simulado por ahora)
-    console.log(`📤 [${now}] ${registros.length} registros encontrados`);
-    logCallback?.(`📤 [${now}] ${registros.length} registros encontrados`);
+    console.log(`📤 [${now}] ${registrosusers.length} registrosusers encontrados`);
+    logCallback?.(`📤 [${now}] ${registrosusers.length} registrosusers encontrados`);
 
-    const token = await SecureStore.getItemAsync('authToken');
+    /*const token = await SecureStore.getItemAsync('authToken');
+    console.log(`📤 [${now}] ${token} es mi token de usuario`);*/
 
-    console.log(`📤 [${now}] ${token} es mi toen de usuario`);
+    //Para Etapa Gestacional
+    const regis_etapa_gesta = await db.getAllAsync(
+      "SELECT * FROM T_05_ETAPA_GESTACIONAL"
+    );
+    console.log(`📤 [${now}] ${regis_etapa_gesta.length} regis_etapa_gesta encontrados`);
+    logCallback?.(`📤 [${now}] ${regis_etapa_gesta.length} regis_etapa_gesta encontrados`);
+    try {
+      const result = await apiFetch('/savetapagesta', {
+        method: 'POST',
+        body: JSON.stringify(regis_etapa_gesta),
+      }, true);
+
+      console.log('✅ ETAPA_GESTACIONAL sincronizado con el servidor:', result);
+    } catch (err) {
+      console.log('❌ Error al sincronizar ETAPA_GESTACIONAL:', err);    
+      return;
+    }
+    //Fin Para Etapa Gestacional
 
     await Notifications.scheduleNotificationAsync({
       content: {
         title: "✅ Sincronización exitosa",
-        body: `${registros.length} registros procesados correctamente.${token}`,
+        //body: `${registrosusers.length} registrosusers procesados correctamente.`,
+        body: `{users:${registrosusers.length},etapa_gesta:${regis_etapa_gesta.length}} registros procesados correctamente.`,
       },
       trigger: null,
     });
@@ -92,7 +116,8 @@ TaskManager.defineTask(TASK_NAME, async () => {
       trigger: null,
     });
 
-    return BackgroundFetch.BackgroundFetchResult.Failed;
+      return BackgroundFetch.BackgroundFetchResult.Failed;
+    }
   }
 });
 

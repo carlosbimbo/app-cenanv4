@@ -845,17 +845,16 @@ const LoginScreen = ({navigation}) => {
                 //Alert.alert('Error', `Usuario no Existe! ${user.username}`);
                 userEmailRef.current.focus(); // Enfocar automáticamente
                 setFocusedInput('userName'); // Resaltar el campo
+                navigation.navigate('Register');
                 return;
             }
             const validUser = await db.getFirstAsync('SELECT id,LOWER(username) as username,password,dni,nombape,lati,longi,altura,lati_viv,longi_viv,altura_viv,profileImage FROM users WHERE LOWER(username) = ? AND password = ?', [userName.toLowerCase(), password]);
             
             if(validUser) {
-              console.log('isConnected mira :',isConnected); 
-              Alert.alert('isConnected mira', isConnected);
+                           
               if (isConnected || isInternetReachable) {
               console.log('Conectado a Internet :'); 
-              Alert.alert('Conectado a Internet', isConnected);
-                
+                              
               const cleanData = Object.fromEntries(
                 Object.entries(validUser).filter(([_, v]) => v != null && v !== '')
               );
@@ -894,7 +893,7 @@ const LoginScreen = ({navigation}) => {
                 Alert.alert('Error', 'Password Incorrecto');
             }
         } catch (error) {
-            console.log('Error durante el Loginxx : ', error);
+            console.log('Error durante el Login : ', error);
         }
     }
 
@@ -1154,45 +1153,41 @@ const RegisterScreen = ({navigation}) => {
             console.log('vid generado :',vid);
             const result = await db.runAsync('INSERT INTO users (id,username, password,dni,nombape,lati,longi,altura) VALUES (?,?, ?,?, ?, ?,?, ?)', [vid,userName.toLowerCase(), password,userDni,userNomb,latitude,longitude,altitude]);
             */
-            
-            console.log('isConnected mira :',isConnected); 
-            Alert.alert('isConnected mira', isConnected);
-          if (isConnected || isInternetReachable) {
-            console.log('Conectado a Internet :'); 
-            Alert.alert('Conectado a Internet', isConnected);
 
             //add nuevo  grabado a postgres 21102025
             // 1️⃣ Generar ID único
-              const vid = await Crypto.randomUUID();
-              console.log('vid generado:', vid);
+            const vid = await Crypto.randomUUID();
+            console.log('vid generado:', vid);
 
-              // 2️⃣ Construir objeto de usuario
-              const userData = {
-                id: vid,
-                username: userName.toLowerCase(),
-                password,
-                dni: userDni,
-                nombape: userNomb,
-                lati: latitude?.toString() || null,
-                longi: longitude?.toString() || null,
-                altura: altitude?.toString() || null,
-                lati_viv: '',
-                longi_viv: '',
-                altura_viv: '',
-                profileimage: '',
-              };
+            // 2️⃣ Construir objeto de usuario
+            const userData = {
+              id: vid,
+              username: userName.toLowerCase(),
+              password,
+              dni: userDni,
+              nombape: userNomb,
+              lati: latitude?.toString() || null,
+              longi: longitude?.toString() || null,
+              altura: altitude?.toString() || null,
+              lati_viv: '',
+              longi_viv: '',
+              altura_viv: '',
+              profileimage: '',
+            };
 
-              const cleanData = Object.fromEntries(
-                Object.entries(userData).filter(([_, v]) => v != null && v !== '')
-              );
+            const cleanData = Object.fromEntries(
+              Object.entries(userData).filter(([_, v]) => v != null && v !== '')
+            );
 
-              const columns = Object.keys(cleanData).join(', ');
-              const placeholders = Object.keys(cleanData).map(() => '?').join(', ');
-              const values = Object.values(cleanData);
+            const columns = Object.keys(cleanData).join(', ');
+            const placeholders = Object.keys(cleanData).map(() => '?').join(', ');
+            const values = Object.values(cleanData);
 
-              await db.runAsync(`INSERT INTO users (${columns}) VALUES (${placeholders})`, values);
-              console.log('Usuario guardado localmente:', cleanData);
-                
+            await db.runAsync(`INSERT INTO users (${columns}) VALUES (${placeholders})`, values);
+            console.log('Usuario guardado localmente:', cleanData);
+                                 
+          if (isConnected || isInternetReachable) {
+            console.log('Conectado a Internet :');                     
                 try {
                   const result = await apiFetch('/newuserfirstsign', {
                     method: 'POST',
