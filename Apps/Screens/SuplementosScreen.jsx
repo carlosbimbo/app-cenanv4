@@ -310,19 +310,25 @@ export default function SuplementosScreen({ route }) {
         }
         //
 
+        const result = await db.getFirstAsync(
+          "SELECT COALESCE(MAX(idsuple), 0) + 1 AS nextId FROM T_05_REGISTRO_SUPLEMENTOS WHERE iduser = ?",
+          [user.id]
+        );
+        const nextIdsuple = result.nextId;
+        
           if(levelhemo>=11){
-            if(totalpictu<1){
+            if(totalpictu<1){  
               await db.runAsync(
-                "INSERT INTO T_05_REGISTRO_SUPLEMENTOS (iduser, fecha, foto,destinationUri,nro_sema) VALUES (?, ?, ?, ?, ?)",
-                [user.id, formattedDate, newFileName,destinationUri,calcfinal_nrosema]
+                "INSERT INTO T_05_REGISTRO_SUPLEMENTOS (idsuple, iduser, fecha, foto,destinationUri,nro_sema) VALUES (?, ?, ?, ?, ?, ?)",
+                [nextIdsuple, user.id, formattedDate, newFileName,destinationUri,calcfinal_nrosema]
               );
               console.log('Graba Gestan normal foto');
             }
           }else{
             if(totalpictu<2){
               await db.runAsync(
-                "INSERT INTO T_05_REGISTRO_SUPLEMENTOS (iduser, fecha, foto,destinationUri,nro_sema) VALUES (?, ?, ?, ?, ?)",
-                [user.id, formattedDate, newFileName,destinationUri,calcfinal_nrosema]
+                "INSERT INTO T_05_REGISTRO_SUPLEMENTOS (idsuple, iduser, fecha, foto,destinationUri,nro_sema) VALUES (?,?, ?, ?, ?, ?)",
+                [nextIdsuple, user.id, formattedDate, newFileName,destinationUri,calcfinal_nrosema]
               );
               console.log('Graba Gestan Anemica foto');
             }

@@ -48,9 +48,15 @@ export default function RegisterEventsScreen({ route }) {
     }
 
     try {
+      const result = await db.getFirstAsync(
+        "SELECT COALESCE(MAX(ideven), 0) + 1 AS nextId FROM T_05_REGISTRO_EVENTOS WHERE iduser = ?",
+        [user.id]
+      );
+      const nextIdeven = result.nextId;
+
       await db.runAsync(
-        "INSERT INTO T_05_REGISTRO_EVENTOS (iduser, tipo, fecha, hora, alarma, descrip) VALUES (?, ?, ?, ?, ?, ?)",
-        [user.id, selectedType, selectedDate, selectedTime, isEnabled ? 1 : 0, eventDetail]
+        "INSERT INTO T_05_REGISTRO_EVENTOS (ideven,iduser, tipo, fecha, hora, alarma, descrip) VALUES (?,?, ?, ?, ?, ?, ?)",
+        [nextIdeven,user.id, selectedType, selectedDate, selectedTime, isEnabled ? 1 : 0, eventDetail]
       );
 
       console.log('guardadoBD Formu : ', `selectedDate: ${selectedDate} - selectedTime : ${selectedTime} - selectedType : ${selectedType} - isEnabled : ${isEnabled ? 1 : 0} - eventDetail : ${eventDetail}`); 
