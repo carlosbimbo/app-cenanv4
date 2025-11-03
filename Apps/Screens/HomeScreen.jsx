@@ -215,7 +215,7 @@ export default function HomeScreen({ route }) {
     const fetchInfoGesta = async () => {
       try {        
         //const results = await db.getAllAsync(`SELECT a.calcu_nrosema,a.calcu_nrodias,a.hemoglo,RTRIM(c.foto) as foto,DATE('now', '-5 hours') as fecactual FROM T_05_ETAPA_GESTACIONAL a left join T_05_REGISTRO_SUPLEMENTOS c on c.iduser = a.id WHERE a.id = ?`, [user.id]);    
-        const results = await db.getAllAsync(`SELECT a.calcu_nrosema,a.calcu_nrodias,c.fecha,a.hemoglo,ifnull(c.totalpic,0) as totalpic FROM T_05_ETAPA_GESTACIONAL a left join (select iduser,fecha,COUNT(*) as totalpic from T_05_REGISTRO_SUPLEMENTOS where iduser = 1 and fecha = DATE('now', '-5 hours') group by iduser,fecha limit 1) c on c.iduser = a.id WHERE a.id = ?`, [user.id]);    
+        const results = await db.getAllAsync(`SELECT a.calcu_nrosema,a.calcu_nrodias,c.fecha,a.hemoglo,ifnull(c.totalpic,0) as totalpic FROM T_05_ETAPA_GESTACIONAL a left join (select iduser,fecha,COUNT(*) as totalpic from T_05_REGISTRO_SUPLEMENTOS where iduser = ? and fecha = DATE('now', '-5 hours') group by iduser,fecha limit 1) c on c.iduser = a.id WHERE a.id = ?`, [user.id,user.id]);    
         //console.log(results);  
         setInfoGesta(results);
       } catch (error) {

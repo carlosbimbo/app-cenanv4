@@ -90,7 +90,7 @@ export async function performSync() {
           true
         );
         console.log("✅ Users sincronizadas correctamente");
-        console.log("📦 Respuesta completa:", JSON.stringify(sync_users, null, 2));
+        //console.log("📦 Respuesta completa:", JSON.stringify(sync_users, null, 2));
         usersSynced = users.length;
       } catch (err) {
         console.log("❌ Error sincronizando users:", err.message);
@@ -105,7 +105,7 @@ export async function performSync() {
           true
         );
         console.log("✅ Etapas sincronizadas correctamente");
-        console.log("📦 Respuesta completa:", JSON.stringify(sync_eta, null, 2));
+        //console.log("📦 Respuesta completa:", JSON.stringify(sync_eta, null, 2));
         etapasSynced = etapas.length;
       } catch (err) {
         console.log("❌ Error sincronizando etapas:", err.message);
@@ -120,7 +120,7 @@ export async function performSync() {
           true
         );
         console.log("✅ Eventos sincronizadas correctamente");
-        console.log("📦 Respuesta completa:", JSON.stringify(sync_events, null, 2));
+        //console.log("📦 Respuesta completa:", JSON.stringify(sync_events, null, 2));
         eventosSynced = eventos.length;
       } catch (err) {
         console.log("❌ Error sincronizando eventos:", err.message);
@@ -135,7 +135,7 @@ export async function performSync() {
           true
         );
         console.log("✅ Suplementos sincronizados correctamente");
-        console.log("📦 Respuesta completa:", JSON.stringify(sync_suple, null, 2));
+        //console.log("📦 Respuesta completa:", JSON.stringify(sync_suple, null, 2));
         suplemeSynced = supleme.length;
       } catch (err) {
         console.log("❌ Error sincronizando suplementos:", err.message);
@@ -150,7 +150,7 @@ export async function performSync() {
           true
         );
         console.log("✅ Agenda Gestacional sincronizadas correctamente");
-        console.log("📦 Respuesta completa:", JSON.stringify(sync_agenda, null, 2));
+        //console.log("📦 Respuesta completa:", JSON.stringify(sync_agenda, null, 2));
         agendaSynced = agendages.length;
       } catch (err) {
         console.log("❌ Error sincronizando Agenda Gestacional:", err.message);
@@ -165,7 +165,7 @@ export async function performSync() {
           true
         );
         console.log("✅ Dias Gestacion sincronizados correctamente");
-        console.log("📦 Respuesta completa:", JSON.stringify(sync_diasges, null, 2));
+        //console.log("📦 Respuesta completa:", JSON.stringify(sync_diasges, null, 2));
         diasgesSynced = diasges.length;
       } catch (err) {
         console.log("❌ Error sincronizando dias Gestacion:", err.message);
@@ -218,7 +218,7 @@ export async function registerBackgroundSync() {
     }
 
     await BackgroundFetch.registerTaskAsync(TASK_NAME, {
-      minimumInterval: 60, // cada 1 minuto (Android limita mínimo ~15min reales)
+      minimumInterval: 240,//60, // cada 1 minuto (Android limita mínimo ~15min reales)
       stopOnTerminate: false,
       startOnBoot: true,
     });

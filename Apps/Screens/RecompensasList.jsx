@@ -79,7 +79,7 @@ const VideoList = ({ user }) => {
                                 WHERE X.iduser = ? AND X.fecha <= DATE('now', '-5 hours') 
                                 GROUP BY X.fecha
                             ) AS T
-                            JOIN T_05_DIAS_GESTACION Z ON T.iduser = Z.iduser AND T.fecha = Z.fec_diagesta AND T.nro_sema = Z.nroseman
+                            JOIN T_05_DIAS_GESTACION Z ON T.iduser = Z.iduser AND T.fecha = Z.fec_diagesta
                             WHERE T.iduser = ?
                         ) AS W
                         JOIN T_LECT_SEMANAS S ON S.nro_semana = W.nro_sema
@@ -100,7 +100,7 @@ const VideoList = ({ user }) => {
           user.id,
           user.id
         ]);  
-  
+        //JOIN T_05_DIAS_GESTACION Z ON T.iduser = Z.iduser AND T.fecha = Z.fec_diagesta AND T.nro_sema = Z.nroseman
         //console.log('Resumen tomo suplementos fetchResumentakesuple:', rstakesupl);
         setVideos(rstakesupl);
       } catch (error) {
@@ -283,7 +283,7 @@ export default function RecompensasList({ route }) {
                           WHERE X.iduser = ? AND X.fecha <= DATE('now', '-5 hours') 
                           GROUP BY X.fecha
                       ) AS T
-                      JOIN T_05_DIAS_GESTACION Z ON T.iduser = Z.iduser AND T.fecha = Z.fec_diagesta AND T.nro_sema = Z.nroseman
+                      JOIN T_05_DIAS_GESTACION Z ON T.iduser = Z.iduser AND T.fecha = Z.fec_diagesta
                       WHERE T.iduser = ?
                   ) AS W
                   JOIN T_LECT_SEMANAS S ON S.nro_semana = W.nro_sema
@@ -296,7 +296,10 @@ export default function RecompensasList({ route }) {
       WHERE RTRIM(U.nrosemas_actual) IN (RTRIM(U.nro_sema_combinado))
   ) AS R
   ORDER BY R.orden_video DESC, R.video_group DESC;
-      `;        
+      `;     
+      
+      //esto comente de la consulta (AND T.nro_sema = Z.nroseman) ya que en T_05_REGISTRO_SUPLEMENTOS el nroseman esta mal 02112025
+      //JOIN T_05_DIAS_GESTACION Z ON T.iduser = Z.iduser AND T.fecha = Z.fec_diagesta AND T.nro_sema = Z.nroseman
 
       const results = await db.getAllAsync(query, [
         user.id, 

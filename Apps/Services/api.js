@@ -37,7 +37,8 @@ export const apiFetch = async (endpoint, options = {}, requireAuth = false) => {
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`Error ${response.status}: ${errorText}`);
+      return null;
+      //throw new Error(`Error ${response.status}: ${errorText}`);
     }
 
     try {
@@ -46,7 +47,7 @@ export const apiFetch = async (endpoint, options = {}, requireAuth = false) => {
       return null;
     }
   } catch (error) {
-    console.error('❌ Error en apiFetch:', error);
+    //console.error('❌ Error en apiFetch:', error);
     throw error;
   }
 };
