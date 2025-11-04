@@ -218,7 +218,7 @@ export async function registerBackgroundSync() {
     }
 
     await BackgroundFetch.registerTaskAsync(TASK_NAME, {
-      minimumInterval: 240,//60, // cada 1 minuto (Android limita mínimo ~15min reales)
+      minimumInterval: 300,//60, // cada 1 minuto (Android limita mínimo ~15min reales)
       stopOnTerminate: false,
       startOnBoot: true,
     });

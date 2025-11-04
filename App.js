@@ -6,7 +6,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { useState, useEffect, useRef } from 'react';
 import Icon from 'react-native-vector-icons/Ionicons';
-import logo from './images/logogesta.png';
+import logo from './images/logogestanew.png';
 import logoeco from './images/icoeco.png';
 import logofpp from './images/icofpp.png';
 import logofur from './images/icofur.png';
@@ -731,7 +731,7 @@ export default function App() {
         console.log("⏱️ Ejecutando sync en foreground...");
         await performSync();
       //}, 60 * 1000);
-      }, 240 * 1000);
+      }, 300 * 1000);
 
       // 🔚 Limpiar el intervalo al desmontar
       return () => clearInterval(interval);
@@ -949,9 +949,32 @@ const LoginScreen = ({navigation}) => {
 
         }
 
+        //Add 04112025
+        //console.log('validUser');
+        //console.log(validUser);
+        const infogesta = await db.getFirstAsync('SELECT id,opcgesta,fur,fec_proba_parto,eco_nro_sem_emb,eco_nro_dias_emb,hemoglo,calcu_nrosema,calcu_nrodias,calcu_nrodias_parto,calcu_fecaprox_parto FROM T_05_ETAPA_GESTACIONAL WHERE id = ?', [validUser.id]);
+        const opcgesta = infogesta?.opcgesta || null;        
+        const fur = infogesta?.fur || null;    
+        const fec_proba_parto = infogesta?.fec_proba_parto || null;        
+        const eco_nro_sem_emb = infogesta?.eco_nro_sem_emb || null; 
+        const eco_nro_dias_emb = infogesta?.eco_nro_dias_emb || null;        
+        const hemoglo = infogesta?.hemoglo || null;      
+
+        if(opcgesta!=null && hemoglo!=null && (fur !=null || fec_proba_parto !=null || (eco_nro_sem_emb !=null || eco_nro_dias_emb !=null) ) ){
+          Alert.alert('Correcto', `Login Exitoso`);  
+          console.log('Ingrese!! TabNavigator');
+          navigation.navigate('TabNavigator', { user:validUser });
+        }else{
+          console.log('Ingrese!! Home');
+          Alert.alert('Correcto', `Login Exitoso`);
+          navigation.navigate('Home', {user:validUser});
+        }
+
+        //
+
                 //Alert.alert('Correcto', `Login Exitoso ${validUser.id}`);
-                Alert.alert('Correcto', `Login Exitoso`);
-                navigation.navigate('Home', {user:validUser});
+                //Alert.alert('Correcto', `Login Exitoso`);
+                //navigation.navigate('Home', {user:validUser});
                 setUserName('');
                 setPassword('');
       } else {
@@ -968,20 +991,14 @@ const LoginScreen = ({navigation}) => {
     return (  
       <>
       <SafeAreaView className="flex-1 bg-gray-100">
+        <StatusBar backgroundColor="#fff" barStyle="light-content" />
         <KeyboardAvoidingView>
           <ScrollView>
             <View className="flex-1 bg-gray-100">
               <View className="p-8 bg-fuchsia-800 rounded-t-3xl shadow-md w-full">
                 <Text className="text-[30px] font-bold text-white text-center mt-6">
-                  Bienvenidos
-                </Text>
-                <Text className="text-[18px] text-white text-center mt-4">
-                  Aplicacion de Seguimiento a Gestantes en su Etapa de Gestacion en el consumo de
-                  sus vitaminas
-                </Text>
-                <TouchableOpacity className="p-4 bg-white rounded-full mt-6">
-                  <Text className="text-blue-500 text-center text-[18px]">Inicio</Text>
-                </TouchableOpacity>
+                  Bienvenidas
+                </Text>                               
               </View>
             </View>
             <View style={styles.containerAdjusted}>
