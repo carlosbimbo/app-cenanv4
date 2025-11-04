@@ -54,7 +54,7 @@ const VideoList = ({ user }) => {
             FROM (
                 SELECT 
                     H.iduser, H.nro_sema_combinado, H.video_group, H.total_score_sumado, H.nrosemas_actual,
-                    CASE WHEN IFNULL(total_score_sumado, 0) BETWEEN 180 AND 210 THEN 1 ELSE 0 END AS show_video
+                    CASE WHEN IFNULL( total_score_sumado, 0 ) BETWEEN 180 AND 210 THEN 1 ELSE CASE WHEN IFNULL( total_score_sumado, 0 ) > 210 THEN 1 ELSE 0 END END AS show_video
                 FROM (
                     SELECT 
                         iduser, GROUP_CONCAT(nro_sema, ',') AS nro_sema_combinado, video_group, 
@@ -76,7 +76,7 @@ const VideoList = ({ user }) => {
                                     AS nrosemas_actual
                                 FROM T_05_REGISTRO_SUPLEMENTOS X
                                 JOIN T_05_ETAPA_GESTACIONAL Y ON Y.id = X.iduser  
-                                WHERE X.iduser = ? AND X.fecha <= DATE('now', '-5 hours') 
+                                WHERE X.iduser = ? AND X.fecha <= DATE('2025-11-24', '-5 hours') 
                                 GROUP BY X.fecha
                             ) AS T
                             JOIN T_05_DIAS_GESTACION Z ON T.iduser = Z.iduser AND T.fecha = Z.fec_diagesta
@@ -93,6 +93,9 @@ const VideoList = ({ user }) => {
         ) AS R
         ORDER BY R.orden_video DESC, R.video_group DESC;
         `;
+        
+        //COMMENT 04112025
+        //CASE WHEN IFNULL(total_score_sumado, 0) BETWEEN 180 AND 210 THEN 1 ELSE 0 END AS show_video
 
         const rstakesupl = await db.getAllAsync(query, [
           user.id,
@@ -258,7 +261,7 @@ export default function RecompensasList({ route }) {
       FROM (
           SELECT 
               H.iduser, H.nro_sema_combinado, H.video_group, H.total_score_sumado, H.nrosemas_actual,hemoglo,
-              CASE WHEN IFNULL(total_score_sumado, 0) BETWEEN 180 AND 210 THEN 1 ELSE 0 END AS show_video
+              CASE WHEN IFNULL( total_score_sumado, 0 ) BETWEEN 180 AND 210 THEN 1 ELSE CASE WHEN IFNULL( total_score_sumado, 0 ) > 210 THEN 1 ELSE 0 END END AS show_video
           FROM (
               SELECT 
                   iduser, GROUP_CONCAT(nro_sema, ',') AS nro_sema_combinado, video_group, 
