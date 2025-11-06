@@ -40,52 +40,52 @@ const VideoList = ({ user }) => {
         FROM (
             SELECT 
                 ? as iduser, '13' as nro_sema_combinado, 13 as video_group, 210 as total_score_sumado, 
-                (select (case when calcu_nrodias > 0 then (calcu_nrosema + 1) else calcu_nrosema end) as nrosemas_actual from T_05_ETAPA_GESTACIONAL where id = ? limit 1) as nrosemas_actual, 1 as show_video, video_premio_desc, video_premio_ruta,video_premio_codigoid, 1 as orden_video 
+                (select (case when calcu_nrodias > 0 then (calcu_nrosema + 1) else calcu_nrosema end) as nrosemas_actual from T_05_ETAPA_GESTACIONAL where id = ? limit 1) as nrosemas_actual, 1 as show_video, video_premio_desc, video_premio_ruta,video_premio_codigoid, 1000 as orden_video 
             FROM T_LECT_SEMANAS 
             WHERE nro_semana = 13
             UNION ALL
-            SELECT 
+            SELECT
                 U.iduser, U.nro_sema_combinado, U.video_group, U.total_score_sumado, U.nrosemas_actual,
-                U.show_video, 
+                U.show_video,
                 CASE WHEN show_video = 1 THEN F.video_premio_desc ELSE null END AS video_premio_desc,
-                CASE WHEN show_video = 1 THEN F.video_premio_ruta ELSE null END AS video_premio_ruta, 
-                CASE WHEN show_video = 1 THEN F.video_premio_codigoid ELSE null END AS video_premio_codigoid,
-                0 as orden_video
+                CASE WHEN show_video = 1 THEN F.video_premio_ruta ELSE null END AS video_premio_ruta,
+                CASE WHEN show_video = 1 THEN F.video_premio_codigoid ELSE null END AS video_premio_codigoid,              
+								ROW_NUMBER() OVER (ORDER BY U.video_group ASC) AS orden_video
             FROM (
-                SELECT 
+                SELECT
                     H.iduser, H.nro_sema_combinado, H.video_group, H.total_score_sumado, H.nrosemas_actual,
-                    CASE WHEN IFNULL( total_score_sumado, 0 ) BETWEEN 180 AND 210 THEN 1 ELSE CASE WHEN IFNULL( total_score_sumado, 0 ) > 210 THEN 1 ELSE 0 END END AS show_video
-                FROM (
-                    SELECT 
-                        iduser, GROUP_CONCAT(nro_sema, ',') AS nro_sema_combinado, video_group, 
+                    CASE WHEN IFNULL( total_score_sumado, 0 ) BETWEEN 180 AND 210 THEN 1 ELSE CASE WHEN IFNULL( total_score_sumado, 0 ) > 10 THEN 1 ELSE 0 END END AS show_video
+                FROM (	
+                    SELECT
+                        iduser, GROUP_CONCAT(nroseman, ',') AS nro_sema_combinado, video_group,
                         SUM(total_score) AS total_score_sumado, nrosemas_actual
                     FROM (
-                        SELECT 
-                            W.iduser, W.nro_sema, S.video_group, SUM(IFNULL(W.score_gesta, 0)) AS total_score, 
-                            W.nrosemas_actual 
+                        SELECT
+                            W.iduser, W.nroseman, S.video_group, SUM(IFNULL(W.score_gesta, 0)) AS total_score,
+                            W.nrosemas_actual
                         FROM (
-                            SELECT 
-                                T.iduser, T.nro_sema, 
-                                (CASE WHEN T.hemoglo < 11 THEN (total_pictu * 5) ELSE (total_pictu * 10) END) AS score_gesta, 
-                                T.nrosemas_actual
+                            SELECT
+                                T.iduser, T.nro_sema,
+                                (CASE WHEN T.hemoglo < 11 THEN (total_pictu * 5) ELSE (total_pictu * 10) END) AS score_gesta,
+                                T.nrosemas_actual,Z.nroseman
                             FROM (
-                                SELECT 
-                                    X.iduser, CAST(Y.hemoglo AS Float) AS hemoglo, X.fecha, 
+                                SELECT
+                                    X.iduser, CAST(Y.hemoglo AS Float) AS hemoglo, X.fecha,
                                     COUNT(DISTINCT X.foto) AS total_pictu, X.nro_sema,
-                                    (CASE WHEN Y.calcu_nrodias > 0 THEN (Y.calcu_nrosema + 1) ELSE Y.calcu_nrosema END) 
+                                    (CASE WHEN Y.calcu_nrodias > 0 THEN (Y.calcu_nrosema + 1) ELSE Y.calcu_nrosema END)
                                     AS nrosemas_actual
                                 FROM T_05_REGISTRO_SUPLEMENTOS X
-                                JOIN T_05_ETAPA_GESTACIONAL Y ON Y.id = X.iduser  
-                                WHERE X.iduser = ? AND X.fecha <= DATE('2025-11-24', '-5 hours') 
+                                JOIN T_05_ETAPA_GESTACIONAL Y ON Y.id = X.iduser
+                                WHERE X.iduser = ? AND X.fecha <= DATE('2025-11-24', '-5 hours')
                                 GROUP BY X.fecha
                             ) AS T
                             JOIN T_05_DIAS_GESTACION Z ON T.iduser = Z.iduser AND T.fecha = Z.fec_diagesta
                             WHERE T.iduser = ?
                         ) AS W
-                        JOIN T_LECT_SEMANAS S ON S.nro_semana = W.nro_sema
-                        GROUP BY W.iduser, W.nro_sema, S.video_group
+                        JOIN T_LECT_SEMANAS S ON S.nro_semana = W.nroseman
+                        GROUP BY W.iduser, W.nroseman, S.video_group
                     ) AS P
-                    GROUP BY iduser, video_group, nrosemas_actual
+                    GROUP BY iduser, video_group, nrosemas_actual										
                 ) AS H
             ) AS U
             LEFT JOIN T_LECT_SEMANAS F ON F.nro_semana = U.video_group
@@ -97,7 +97,7 @@ const VideoList = ({ user }) => {
         
         //COMMENT 04112025
         //CASE WHEN IFNULL(total_score_sumado, 0) BETWEEN 180 AND 210 THEN 1 ELSE 0 END AS show_video
-
+        console.log(query);                      
         const rstakesupl = await db.getAllAsync(query, [
           user.id,
           user.id,
