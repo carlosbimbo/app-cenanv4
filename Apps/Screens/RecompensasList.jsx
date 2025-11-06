@@ -91,6 +91,7 @@ const VideoList = ({ user }) => {
             LEFT JOIN T_LECT_SEMANAS F ON F.nro_semana = U.video_group
             WHERE U.show_video = 1
         ) AS R
+        where R.video_group is not null and NOT(R.video_group = 13 and R.orden_video = 0)
         ORDER BY R.orden_video DESC, R.video_group DESC;
         `;
         
