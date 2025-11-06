@@ -101,12 +101,12 @@ const VideoList = ({ user }) => {
                                     AS nrosemas_actual
                                 FROM T_05_REGISTRO_SUPLEMENTOS X
                                 JOIN T_05_ETAPA_GESTACIONAL Y ON Y.id = X.iduser
-                                WHERE X.iduser = ? AND X.fecha <= DATE('2025-11-24', '-5 hours')
+                                WHERE X.iduser = ? AND X.fecha <= DATE('now', '-5 hours')
                                 GROUP BY X.fecha
                             ) AS T                            
                             WHERE T.iduser = ?
 												) T ON T.iduser = Z.iduser AND T.fecha = Z.fec_diagesta
-												where nroseman BETWEEN 16 and 40 and Z.fec_diagesta <= DATE('2025-11-24', '-5 hours')
+												where nroseman BETWEEN 16 and 40 and Z.fec_diagesta <= DATE('now', '-5 hours')
 					
                         ) AS W
                         JOIN T_LECT_SEMANAS S ON S.nro_semana = W.nroseman
@@ -126,7 +126,7 @@ const VideoList = ({ user }) => {
         
         //COMMENT 04112025
         //CASE WHEN IFNULL(total_score_sumado, 0) BETWEEN 180 AND 210 THEN 1 ELSE 0 END AS show_video
-        console.log(query);                      
+        //console.log(query);                      
         const rstakesupl = await db.getAllAsync(query, [
           user.id,
           user.id,
@@ -215,9 +215,10 @@ const Formulario2 = ({ user }) => (
   </SafeAreaView>
 );
 
-const Formulario3 = () => (
+const Formulario3 = ({ user }) => (
   <SafeAreaView className="p-4">
-    <Text className="text-xl">Mis Reels</Text>   
+    <Text className="text-xl">Mis Reels</Text> 
+    <VideoReelsList user={user} />  
   </SafeAreaView>
 );
 
@@ -229,13 +230,178 @@ const TabContent = ({ selectedTab, user }) => {
     case 2:
       return <Formulario2 user={user} />;
     case 3:
-      return <Formulario3 />;
+      return <Formulario3 user={user} />;
     default:
       return <Formulario1 />;
   }
 };
 
+// 🔥 Versión completa de VideoConsejosList corregida
 const VideoConsejosList = ({ user }) => {
+  const [playingVideoId, setPlayingVideoId] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [videos, setVideos] = useState([]);
+  const [rawVideos, setRawVideos] = useState([]); // ← almacena los datos crudos de SQLite
+  const db = useSQLiteContext();
+
+  const togglePlaying = useCallback((videoId) => {
+    setPlayingVideoId((prev) => (prev === videoId ? null : videoId));
+  }, []);
+
+  // 🔍 Consulta a la base de datos
+  const fetchResumentakesuple = useCallback(async () => {
+    try {
+      const query = `
+        SELECT
+          W.iduser,
+          W.nroseman,
+          W.nroseman AS video_group,
+          SUM(IFNULL(W.score_gesta, 0)) AS total_score,
+          W.nrosemas_actual,
+          CASE
+              WHEN SUM(IFNULL(W.score_gesta, 0)) = 0 THEN NULL
+              WHEN SUM(IFNULL(W.score_gesta, 0)) = 10 THEN tips_emb1_desc
+              WHEN SUM(IFNULL(W.score_gesta, 0)) = 20 THEN tips_emb1_desc || '|' || tips_emb2_desc
+              WHEN SUM(IFNULL(W.score_gesta, 0)) = 30 THEN tips_emb1_desc || '|' || tips_emb2_desc || '|' || tips_emb3_desc
+              WHEN SUM(IFNULL(W.score_gesta, 0)) = 40 THEN tips_emb1_desc || '|' || tips_emb2_desc || '|' || tips_emb3_desc || '|' || tips_cons1_desc
+              WHEN SUM(IFNULL(W.score_gesta, 0)) > 40 THEN tips_emb1_desc || '|' || tips_emb2_desc || '|' || tips_emb3_desc || '|' || tips_cons1_desc
+              ELSE NULL
+          END AS descrip_video,
+          CASE
+              WHEN SUM(IFNULL(W.score_gesta, 0)) = 0 THEN NULL
+              WHEN SUM(IFNULL(W.score_gesta, 0)) = 10 THEN tips_emb1_ruta
+              WHEN SUM(IFNULL(W.score_gesta, 0)) = 20 THEN tips_emb1_ruta || '|' || tips_emb2_ruta
+              WHEN SUM(IFNULL(W.score_gesta, 0)) = 30 THEN tips_emb1_ruta || '|' || tips_emb2_ruta || '|' || tips_emb3_ruta
+              WHEN SUM(IFNULL(W.score_gesta, 0)) = 40 THEN tips_emb1_ruta || '|' || tips_emb2_ruta || '|' || tips_emb3_ruta || '|' || tips_cons1_ruta
+              WHEN SUM(IFNULL(W.score_gesta, 0)) > 40 THEN tips_emb1_ruta || '|' || tips_emb2_ruta || '|' || tips_emb3_ruta || '|' || tips_cons1_ruta
+              ELSE NULL
+          END AS consejos_videoid
+        FROM (        
+            SELECT 
+                IFNULL(T.iduser,Z.iduser) AS iduser,
+                Z.nroseman,
+                IFNULL(T.score_gesta,10) AS score_gesta,
+                IFNULL(T.nro_sema,(SELECT nro_sema FROM T_05_REGISTRO_SUPLEMENTOS WHERE iduser = ? LIMIT 1)) AS nrosemas_actual,
+                IFNULL(T.fecha,Z.fec_diagesta) AS fecha,
+                S.tips_emb1_ruta,
+                S.tips_emb2_ruta,
+                S.tips_emb3_ruta,
+                S.tips_cons1_ruta,
+                S.tips_emb1_desc,
+                S.tips_emb2_desc,
+                S.tips_emb3_desc,
+                S.tips_cons1_desc
+            FROM T_05_DIAS_GESTACION Z
+            JOIN (
+                SELECT
+                    T.iduser, T.nro_sema,
+                    (CASE WHEN T.hemoglo < 11 THEN (total_pictu * 5) ELSE (total_pictu * 10) END) AS score_gesta,
+                    T.nrosemas_actual, T.fecha
+                FROM (
+                    SELECT
+                        X.iduser,
+                        CAST(Y.hemoglo AS FLOAT) AS hemoglo,
+                        X.fecha,
+                        COUNT(DISTINCT X.foto) AS total_pictu,
+                        X.nro_sema,
+                        (CASE WHEN Y.calcu_nrodias > 0 THEN (Y.calcu_nrosema + 1) ELSE Y.calcu_nrosema END) AS nrosemas_actual
+                    FROM T_05_REGISTRO_SUPLEMENTOS X
+                    JOIN T_05_ETAPA_GESTACIONAL Y ON Y.id = X.iduser
+                    WHERE X.iduser = ?
+                      AND X.fecha <= DATE('now', '-5 hours')
+                    GROUP BY X.fecha
+                ) AS T
+                WHERE T.iduser = ?
+            ) T ON T.iduser = Z.iduser AND T.fecha = Z.fec_diagesta
+            JOIN T_LECT_SEMANAS S ON S.nro_semana = Z.nroseman
+            WHERE Z.nroseman BETWEEN 13 AND 40
+              AND Z.fec_diagesta <= DATE('now', '-5 hours')
+        ) AS W
+        GROUP BY W.iduser, W.nroseman
+        ORDER BY W.nroseman DESC;
+      `;
+
+      const rstakesupl = await db.getAllAsync(query, [user.id, user.id, user.id]);
+      setRawVideos(rstakesupl); // ← guardamos el resultado original
+    } catch (error) {
+      console.error("Error al obtener datos de recompensas videos de Consejos:", error);
+    }
+  }, [db, user.id]);
+
+  // ⚙️ Cargar datos iniciales
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
+      await fetchResumentakesuple();
+      setLoading(false);
+    };
+    load();
+  }, [fetchResumentakesuple]);
+
+  // 🔄 Transformar los campos separados por "|" a una lista plana
+  useEffect(() => {
+    if (rawVideos.length > 0) {
+      const expanded = rawVideos.flatMap((item) => {
+        const descs = item.descrip_video ? item.descrip_video.split("|") : [];
+        const ids = item.consejos_videoid ? item.consejos_videoid.split("|") : [];
+
+        return descs.map((desc, i) => ({
+          video_premio_desc: desc.trim(),
+          video_premio_codigoid: ids[i]?.trim() ?? "",
+        }));
+      });
+
+      setVideos(expanded);
+    }
+  }, [rawVideos]);
+
+  // 📱 Renderizar cada video individualmente
+  const screenWidth = Dimensions.get("window").width;
+  const videoHeight = screenWidth < 400 ? 180 : 250;
+
+  const renderItem = ({ item }) => (
+    <View style={styles.videoContainer}>
+      <Text style={styles.videoTitle}>{item.video_premio_desc}</Text>
+      <YoutubePlayer
+        height={videoHeight}
+        videoId={item.video_premio_codigoid}
+        play={playingVideoId === item.video_premio_codigoid}
+      />
+      <TouchableOpacity
+        onPress={() => togglePlaying(item.video_premio_codigoid)}
+        style={styles.playPauseButton}
+      >
+        <Text style={styles.playPauseText}>
+          {playingVideoId === item.video_premio_codigoid ? "Pausar" : "Reproducir"}
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  // 🌀 Mostrar carga
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#007bff" />
+        <Text>Cargando videos...</Text>
+      </View>
+    );
+  }
+
+  return (
+    <View className="flex-1 bg-neutral-50 dark:bg-black">
+    <FlatList
+      data={videos}
+      renderItem={renderItem}
+      keyExtractor={(item, index) => `${item.video_premio_codigoid}_${index}`}
+      contentContainerStyle={{ paddingBottom: 50 }}
+      showsVerticalScrollIndicator={false}
+    />
+  </View>
+  );
+};
+
+const VideoReelsList = ({ user }) => {
   const [playingVideoId, setPlayingVideoId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [videos, setVideos] = useState([]);
@@ -249,94 +415,27 @@ const VideoConsejosList = ({ user }) => {
     const fetchResumentakesuple = useCallback(async () => {
       try {        
         const query = `
-        SELECT 
-            R.iduser, R.nro_sema_combinado, R.video_group, R.total_score_sumado, R.nrosemas_actual, 
-            R.show_video, R.video_premio_desc, R.video_premio_ruta,R.video_premio_codigoid, R.orden_video
-        FROM (
-            SELECT 
-                ? as iduser, '13' as nro_sema_combinado, 13 as video_group, 210 as total_score_sumado, 
-                (select (case when calcu_nrodias > 0 then (calcu_nrosema + 1) else calcu_nrosema end) as nrosemas_actual from T_05_ETAPA_GESTACIONAL where id = ? limit 1) as nrosemas_actual, 1 as show_video, video_premio_desc, video_premio_ruta,video_premio_codigoid, 1000 as orden_video 
-            FROM T_LECT_SEMANAS 
-            WHERE nro_semana = 13
-            UNION ALL
-						SELECT 
-                ? as iduser, '14' as nro_sema_combinado, 14 as video_group, 210 as total_score_sumado, 
-                (select (case when calcu_nrodias > 0 then (calcu_nrosema + 1) else calcu_nrosema end) as nrosemas_actual from T_05_ETAPA_GESTACIONAL where id = ? limit 1) as nrosemas_actual, 1 as show_video, video_premio_desc, video_premio_ruta,video_premio_codigoid, 999 as orden_video 
-            FROM T_LECT_SEMANAS 
-            WHERE nro_semana = 10 AND (SELECT nro_sema FROM T_05_REGISTRO_SUPLEMENTOS WHERE iduser = ? limit 1) >= 14 
-						UNION ALL
-						SELECT 
-                ? as iduser, '15' as nro_sema_combinado, 15 as video_group, 210 as total_score_sumado, 
-                (select (case when calcu_nrodias > 0 then (calcu_nrosema + 1) else calcu_nrosema end) as nrosemas_actual from T_05_ETAPA_GESTACIONAL where id = ? limit 1) as nrosemas_actual, 1 as show_video, video_premio_desc, video_premio_ruta,video_premio_codigoid, 998 as orden_video 
-            FROM T_LECT_SEMANAS 
-            WHERE nro_semana = 11 AND (SELECT nro_sema FROM T_05_REGISTRO_SUPLEMENTOS WHERE iduser = ? limit 1) >= 15 
-						UNION ALL
-						SELECT 
-                ? as iduser, '16' as nro_sema_combinado, 16 as video_group, 210 as total_score_sumado, 
-                (select (case when calcu_nrodias > 0 then (calcu_nrosema + 1) else calcu_nrosema end) as nrosemas_actual from T_05_ETAPA_GESTACIONAL where id = ? limit 1) as nrosemas_actual, 1 as show_video, video_premio_desc, video_premio_ruta,video_premio_codigoid, 997 as orden_video 
-            FROM T_LECT_SEMANAS 
-            WHERE nro_semana = 12 AND (SELECT nro_sema FROM T_05_REGISTRO_SUPLEMENTOS WHERE iduser = ? limit 1) >= 16 
-            UNION ALL
-            SELECT
-                U.iduser, U.nro_sema_combinado, U.video_group, U.total_score_sumado, U.nrosemas_actual,
-                U.show_video,
-                CASE WHEN show_video = 1 THEN F.video_premio_desc ELSE null END AS video_premio_desc,
-                CASE WHEN show_video = 1 THEN F.video_premio_ruta ELSE null END AS video_premio_ruta,
-                CASE WHEN show_video = 1 THEN F.video_premio_codigoid ELSE null END AS video_premio_codigoid,               
-								ROW_NUMBER() OVER (ORDER BY U.video_group ASC) AS orden_video
-            FROM (
-                SELECT
-                    H.iduser, H.nro_sema_combinado, H.video_group, H.total_score_sumado, H.nrosemas_actual,
-                    CASE WHEN IFNULL( total_score_sumado, 0 ) BETWEEN 180 AND 210 THEN 1 ELSE CASE WHEN IFNULL( total_score_sumado, 0 ) > 10 THEN 1 ELSE 0 END END AS show_video
-                FROM (
-                    SELECT
-                        iduser, GROUP_CONCAT(nroseman, ',') AS nro_sema_combinado, video_group,
-                        SUM(total_score) AS total_score_sumado, nrosemas_actual
-                    FROM (
-                        SELECT
-                            W.iduser, W.nroseman, S.video_group, SUM(IFNULL(W.score_gesta, 0)) AS total_score,
-                            W.nrosemas_actual
-                        FROM (                   
-											select 
-												IFNULL(T.iduser,Z.iduser) as iduser,IFNULL(T.nro_sema,Z.nroseman) as nroseman,IFNULL(T.score_gesta,10) as score_gesta,
-												IFNULL(T.nro_sema,(SELECT nro_sema FROM T_05_REGISTRO_SUPLEMENTOS WHERE iduser = ? limit 1)) as nrosemas_actual,IFNULL(T.fecha,Z.fec_diagesta) as fecha,
-												(case when IFNULL(T.iduser,-1) == -1 then 0 else 1 end) as isfilluser												
-												from T_05_DIAS_GESTACION Z
-                       left JOIN 
-											 (
-											 SELECT
-                                T.iduser, T.nro_sema,
-                                (CASE WHEN T.hemoglo < 11 THEN (total_pictu * 5) ELSE (total_pictu * 10) END) AS score_gesta,
-                                T.nrosemas_actual,T.fecha
-                            FROM (
-                                SELECT
-                                    X.iduser, CAST(Y.hemoglo AS Float) AS hemoglo, X.fecha,
-                                    COUNT(DISTINCT X.foto) AS total_pictu, X.nro_sema,
-                                    (CASE WHEN Y.calcu_nrodias > 0 THEN (Y.calcu_nrosema + 1) ELSE Y.calcu_nrosema END)
-                                    AS nrosemas_actual
-                                FROM T_05_REGISTRO_SUPLEMENTOS X
-                                JOIN T_05_ETAPA_GESTACIONAL Y ON Y.id = X.iduser
-                                WHERE X.iduser = ? AND X.fecha <= DATE('2025-11-24', '-5 hours')
-                                GROUP BY X.fecha
-                            ) AS T                            
-                            WHERE T.iduser = ?
-												) T ON T.iduser = Z.iduser AND T.fecha = Z.fec_diagesta
-												where nroseman BETWEEN 16 and 40 and Z.fec_diagesta <= DATE('2025-11-24', '-5 hours')
-					
-                        ) AS W
-                        JOIN T_LECT_SEMANAS S ON S.nro_semana = W.nroseman
-                        GROUP BY W.iduser, W.nroseman, S.video_group
-					
-                    ) AS P
-                    GROUP BY iduser, video_group, nrosemas_actual
-			
-                ) AS H
-            ) AS U
-            JOIN T_LECT_SEMANAS F ON F.nro_semana = U.video_group
-            WHERE U.show_video = 1
-        ) AS R
-        where R.video_group is not null and NOT(R.video_group = 13 and R.orden_video = 0)
-        ORDER BY R.orden_video DESC, R.video_group DESC;
+        SELECT F.iduser, F.nro_sema,F.fecha,F.orden_video,R.descrip,RTRIM(LTRIM(R.rutavideo)) as rutavideo FROM (
+          SELECT
+              T.iduser, T.nro_sema,T.fecha,ROW_NUMBER() OVER (ORDER BY T.fecha ASC) AS orden_video
+          FROM (
+              SELECT
+                  X.iduser,
+                  CAST(Y.hemoglo AS FLOAT) AS hemoglo,
+                  X.fecha,
+                  COUNT(DISTINCT X.foto) AS total_pictu,
+                  X.nro_sema,
+                  (CASE WHEN Y.calcu_nrodias > 0 THEN (Y.calcu_nrosema + 1) ELSE Y.calcu_nrosema END) AS nrosemas_actual
+              FROM T_05_REGISTRO_SUPLEMENTOS X
+              JOIN T_05_ETAPA_GESTACIONAL Y ON Y.id = X.iduser
+              WHERE X.iduser = ?
+                AND X.fecha <= DATE('now', '-5 hours')
+              GROUP BY X.fecha
+          ) AS T
+          WHERE T.iduser = ?
+          ) AS F
+          JOIN T_05_REELS_VIDEO R ON R.idreel = F.orden_video
+          ORDER BY F.orden_video DESC;
         `;
         
         //COMMENT 04112025
@@ -344,25 +443,13 @@ const VideoConsejosList = ({ user }) => {
         console.log(query);                      
         const rstakesupl = await db.getAllAsync(query, [
           user.id,
-          user.id,
-          user.id,
-          user.id,
-          user.id,
-          user.id,
-          user.id,
-          user.id,
-          user.id,
-          user.id,
-          user.id,
-          user.id,
-          user.id,
           user.id
         ]);  
         //JOIN T_05_DIAS_GESTACION Z ON T.iduser = Z.iduser AND T.fecha = Z.fec_diagesta AND T.nro_sema = Z.nroseman
         //console.log('Resumen tomo suplementos fetchResumentakesuple:', rstakesupl);
         setVideos(rstakesupl);
       } catch (error) {
-        console.error('Error al obtener datos de semana de gestacion y toma de suplementos en recompensas:', error);
+        console.error('Error al obtener datos de recompensas en videos de Reels:', error);
       }
     }, [db, user.id]);
   
@@ -386,11 +473,11 @@ const VideoConsejosList = ({ user }) => {
 
   const renderItem = ({ item }) => (
     <View style={styles.videoContainer}>
-      <Text style={styles.videoTitle}>{item.video_premio_desc}</Text>
-      <YoutubePlayer height={videoHeight} videoId={item.video_premio_codigoid} play={playingVideoId === item.video_premio_codigoid} />
-      <TouchableOpacity onPress={() => togglePlaying(item.video_premio_codigoid)} style={styles.playPauseButton}>
+      <Text style={styles.videoTitle}>{item.descrip}</Text>
+      <YoutubePlayer height={videoHeight} videoId={item.rutavideo} play={playingVideoId === item.rutavideo} />
+      <TouchableOpacity onPress={() => togglePlaying(item.rutavideo)} style={styles.playPauseButton}>
         <Text style={styles.playPauseText}>
-          {playingVideoId === item.video_premio_codigoid ? "Pausar" : "Reproducir"}
+          {playingVideoId === item.rutavideo ? "Pausar" : "Reproducir"}
         </Text>
       </TouchableOpacity>
     </View>

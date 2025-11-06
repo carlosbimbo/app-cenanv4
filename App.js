@@ -705,6 +705,46 @@ const initializeDatabase = async(db) => {
               PRIMARY KEY (idsuple, iduser)
               );
           `);
+        
+          await db.execAsync(`
+          PRAGMA journal_mode = WAL;
+          CREATE TABLE IF NOT EXISTS T_05_REELS_VIDEO (
+            idreel INTEGER NOT NULL PRIMARY KEY,                                 
+            descrip varchar(200) NULL,              
+            rutavideo varchar(100) NULL,
+            obs varchar(500) NULL 
+            );      
+        INSERT INTO T_05_REELS_VIDEO (idreel,descrip,rutavideo,obs) VALUES (1, 'Cayhua Rellena', 'z5HSfDxoxxE', NULL);
+        INSERT INTO T_05_REELS_VIDEO (idreel,descrip,rutavideo,obs) VALUES (2, 'Lentejitas', 'j6CqeYAGcKA', NULL);
+        INSERT INTO T_05_REELS_VIDEO (idreel,descrip,rutavideo,obs) VALUES (3, 'Tallarines verdes', 'nTcVbTTfMs4', NULL);
+        INSERT INTO T_05_REELS_VIDEO (idreel,descrip,rutavideo,obs) VALUES (4, 'Higado encebollado', 'c46b2s3kPUs', NULL);
+        INSERT INTO T_05_REELS_VIDEO (idreel,descrip,rutavideo,obs) VALUES (5, 'Causa de sangresita', '4sh94k24RGY', NULL);
+        INSERT INTO T_05_REELS_VIDEO (idreel,descrip,rutavideo,obs) VALUES (6, 'Trigo a la jardinera', 'n9K0jbTqiQE', NULL);
+        INSERT INTO T_05_REELS_VIDEO (idreel,descrip,rutavideo,obs) VALUES (7, 'Tallarin con pescado', 'gyr1wtjiZr8', NULL);
+        INSERT INTO T_05_REELS_VIDEO (idreel,descrip,rutavideo,obs) VALUES (8, 'Bofe a la jardinera', 'jdLFZZIknQU', NULL);
+        INSERT INTO T_05_REELS_VIDEO (idreel,descrip,rutavideo,obs) VALUES (9, 'Sudado con lenteja', 'stX5sFPPSVE', NULL);
+        INSERT INTO T_05_REELS_VIDEO (idreel,descrip,rutavideo,obs) VALUES (10, 'Garbanzo con higado', 'ldM144pPcdQ', NULL);
+        INSERT INTO T_05_REELS_VIDEO (idreel,descrip,rutavideo,obs) VALUES (11, 'Trigo con carne de res', 'Mi6IJOCVPL0', NULL);
+        INSERT INTO T_05_REELS_VIDEO (idreel,descrip,rutavideo,obs) VALUES (12, 'Arroz Primaveral', 'lStxb_VlYlE', NULL);
+        INSERT INTO T_05_REELS_VIDEO (idreel,descrip,rutavideo,obs) VALUES (13, 'Olluco con carne seca', 'rWMw8zQlKoE', NULL);
+        INSERT INTO T_05_REELS_VIDEO (idreel,descrip,rutavideo,obs) VALUES (14, 'Mondonguito', 'goUh4wIZk6A', NULL);
+        INSERT INTO T_05_REELS_VIDEO (idreel,descrip,rutavideo,obs) VALUES (15, 'Vainita Salteada', '-y_eafxJG4E', NULL);
+        INSERT INTO T_05_REELS_VIDEO (idreel,descrip,rutavideo,obs) VALUES (16, 'Higado Primaveral', 'LZESr7VxaW8', NULL);
+        INSERT INTO T_05_REELS_VIDEO (idreel,descrip,rutavideo,obs) VALUES (17, 'Escabeche de Bazo', '4ucNLR-xz0s', NULL);
+        INSERT INTO T_05_REELS_VIDEO (idreel,descrip,rutavideo,obs) VALUES (18, 'Lentejas con pota', 'mx1B8agyCcA', NULL);
+        INSERT INTO T_05_REELS_VIDEO (idreel,descrip,rutavideo,obs) VALUES (19, 'Uchu de pallar', 'tbCvkF5V1FQ', NULL);
+        INSERT INTO T_05_REELS_VIDEO (idreel,descrip,rutavideo,obs) VALUES (20, 'Crema de garbanzo', '9LJqoKKha4k', NULL);
+        INSERT INTO T_05_REELS_VIDEO (idreel,descrip,rutavideo,obs) VALUES (21, 'Seco de higado', 'FIzNub6EVU4', NULL);
+        INSERT INTO T_05_REELS_VIDEO (idreel,descrip,rutavideo,obs) VALUES (22, 'Higado en jugo de limón', 'BUiZ5vz4NBQ', NULL);
+        INSERT INTO T_05_REELS_VIDEO (idreel,descrip,rutavideo,obs) VALUES (23, 'Picante de pallares con relleno', 'syJY9PD5wkA', NULL);
+        INSERT INTO T_05_REELS_VIDEO (idreel,descrip,rutavideo,obs) VALUES (24, 'Tallarin con pescado', '8AlUjHE4HjQ', NULL);
+        INSERT INTO T_05_REELS_VIDEO (idreel,descrip,rutavideo,obs) VALUES (25, 'Chaufa de quinua y trigo', 'rQPyzwiAi3A', NULL);
+        INSERT INTO T_05_REELS_VIDEO (idreel,descrip,rutavideo,obs) VALUES (26, 'Tortilla de sangresita', 'HEn0tnG7w4o', NULL);
+        INSERT INTO T_05_REELS_VIDEO (idreel,descrip,rutavideo,obs) VALUES (27, 'Chanfainita con trigo', 'ZL-P6no0qPA', NULL);
+        INSERT INTO T_05_REELS_VIDEO (idreel,descrip,rutavideo,obs) VALUES (28, 'Tallarin con chanfainita', 'B5rnyQptZZ4', NULL);
+        INSERT INTO T_05_REELS_VIDEO (idreel,descrip,rutavideo,obs) VALUES (29, 'Molleja saltada', '3O1gomcVZUI', NULL);
+        INSERT INTO T_05_REELS_VIDEO (idreel,descrip,rutavideo,obs) VALUES (30, 'Cau cau', 'JpzCQWOkcfA', NULL);      
+        `);
 
         console.log('Database initialized !');
     } catch (error) {
