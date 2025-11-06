@@ -76,7 +76,7 @@ const VideoList = ({ user }) => {
                                     AS nrosemas_actual
                                 FROM T_05_REGISTRO_SUPLEMENTOS X
                                 JOIN T_05_ETAPA_GESTACIONAL Y ON Y.id = X.iduser
-                                WHERE X.iduser = ? AND X.fecha <= DATE('2025-11-24', '-5 hours')
+                                WHERE X.iduser = ? AND X.fecha <= DATE('now', '-5 hours')
                                 GROUP BY X.fecha
                             ) AS T
                             JOIN T_05_DIAS_GESTACION Z ON T.iduser = Z.iduser AND T.fecha = Z.fec_diagesta
