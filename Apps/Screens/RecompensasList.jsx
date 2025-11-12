@@ -525,96 +525,82 @@ export default function RecompensasList({ route }) {
     try {
          
       const query = `
-      SELECT 
-      R.iduser, R.nro_sema_combinado, R.total_score_sumado, R.nrosemas_actual,						
-      CASE
-      WHEN R.hemoglo < 11 AND IFNULL(R.nrosemas_actual, 0) = 8 THEN 'Valiente guerrera'
-      WHEN R.hemoglo < 11 AND IFNULL(R.nrosemas_actual, 0) = 9 THEN 'Valiente guerrera'
-      WHEN R.hemoglo < 11 AND IFNULL(R.nrosemas_actual, 0) = 10 THEN 'Valiente guerrera'
-      WHEN R.hemoglo < 11 AND IFNULL(R.nrosemas_actual, 0) = 11 THEN 'Despierta guerrera'
-      WHEN R.hemoglo < 11 AND IFNULL(R.nrosemas_actual, 0) = 12 THEN 'Despierta guerrera'
-      WHEN R.hemoglo < 11 AND IFNULL(R.nrosemas_actual, 0) = 13 THEN 'Despierta guerrera'						
-      WHEN R.hemoglo >= 11 AND IFNULL(R.nrosemas_actual, 0) = 14 THEN 'Iniciadora del hierro'
-      WHEN R.hemoglo >= 11 AND IFNULL(R.nrosemas_actual, 0) = 15 THEN 'Iniciadora del hierro'
-      WHEN R.hemoglo >= 11 AND IFNULL(R.nrosemas_actual, 0) = 16 THEN 'Iniciadora del hierro'
-      WHEN R.hemoglo >= 11 AND IFNULL(R.nrosemas_actual, 0) = 17 THEN 'Aspirante del hierro'
-      WHEN R.hemoglo >= 11 AND IFNULL(R.nrosemas_actual, 0) = 18 THEN 'Aspirante del hierro'
-      WHEN R.hemoglo >= 11 AND IFNULL(R.nrosemas_actual, 0) = 19 THEN 'Aspirante del hierro'
-      WHEN R.hemoglo >= 11 AND IFNULL(R.nrosemas_actual, 0) = 20 THEN 'Exploradora del hierro'
-      WHEN R.hemoglo >= 11 AND IFNULL(R.nrosemas_actual, 0) = 21 THEN 'Exploradora del hierro'
-      WHEN R.hemoglo >= 11 AND IFNULL(R.nrosemas_actual, 0) = 22 THEN 'Exploradora del hierro'
-      WHEN R.hemoglo >= 11 AND IFNULL(R.nrosemas_actual, 0) = 23 THEN 'Guerrera del hierro'
-      WHEN R.hemoglo >= 11 AND IFNULL(R.nrosemas_actual, 0) = 24 THEN 'Guerrera del hierro'
-      WHEN R.hemoglo >= 11 AND IFNULL(R.nrosemas_actual, 0) = 25 THEN 'Guerrera del hierro'
-      WHEN R.hemoglo >= 11 AND IFNULL(R.nrosemas_actual, 0) = 26 THEN 'Defensora del hierro'
-      WHEN R.hemoglo >= 11 AND IFNULL(R.nrosemas_actual, 0) = 27 THEN 'Defensora del hierro'
-      WHEN R.hemoglo >= 11 AND IFNULL(R.nrosemas_actual, 0) = 28 THEN 'Defensora del hierro'
-      WHEN R.hemoglo >= 11 AND IFNULL(R.nrosemas_actual, 0) = 29 THEN 'Dama de hierro'
-      WHEN R.hemoglo >= 11 AND IFNULL(R.nrosemas_actual, 0) = 30 THEN 'Dama de hierro'
-      WHEN R.hemoglo >= 11 AND IFNULL(R.nrosemas_actual, 0) = 31 THEN 'Dama de hierro'
-      WHEN R.hemoglo >= 11 AND IFNULL(R.nrosemas_actual, 0) = 32 THEN 'Princesa de hierro'
-      WHEN R.hemoglo >= 11 AND IFNULL(R.nrosemas_actual, 0) = 33 THEN 'Princesa de hierro'
-      WHEN R.hemoglo >= 11 AND IFNULL(R.nrosemas_actual, 0) = 34 THEN 'Princesa de hierro'
-      WHEN R.hemoglo >= 11 AND IFNULL(R.nrosemas_actual, 0) = 35 THEN 'Reina de hierro'
-      WHEN R.hemoglo >= 11 AND IFNULL(R.nrosemas_actual, 0) = 36 THEN 'Reina de hierro'
-      WHEN R.hemoglo >= 11 AND IFNULL(R.nrosemas_actual, 0) = 37 THEN 'Reina de hierro'
-      WHEN R.hemoglo >= 11 AND IFNULL(R.nrosemas_actual, 0) = 38 THEN 'Emperatriz de hierro'
-      WHEN R.hemoglo >= 11 AND IFNULL(R.nrosemas_actual, 0) = 39 THEN 'Emperatriz de hierro'
-      WHEN R.hemoglo >= 11 AND IFNULL(R.nrosemas_actual, 0) = 40 THEN 'Emperatriz de hierro'
-      ELSE 'Iniciadora del hierro'
-      END AS level_gesta
-  FROM (
-      SELECT 
-          U.iduser, U.nro_sema_combinado, U.video_group, U.total_score_sumado, U.nrosemas_actual,
-          0 as orden_video,U.hemoglo
-      FROM (
-          SELECT 
-              H.iduser, H.nro_sema_combinado, H.video_group, H.total_score_sumado, H.nrosemas_actual,hemoglo,
-              CASE WHEN IFNULL( total_score_sumado, 0 ) BETWEEN 180 AND 210 THEN 1 ELSE CASE WHEN IFNULL( total_score_sumado, 0 ) > 210 THEN 1 ELSE 0 END END AS show_video
-          FROM (
-              SELECT 
-                  iduser, GROUP_CONCAT(nro_sema, ',') AS nro_sema_combinado, video_group, 
-                  SUM(total_score) AS total_score_sumado, nrosemas_actual,hemoglo
-              FROM (
-                  SELECT 
-                      W.iduser, W.nro_sema, S.video_group, SUM(IFNULL(W.score_gesta, 0)) AS total_score, 
-                      W.nrosemas_actual,W.hemoglo 
-                  FROM (
-                      SELECT 
-                          T.iduser, T.nro_sema, 
-                          (CASE WHEN T.hemoglo < 11 THEN (total_pictu * 5) ELSE (total_pictu * 10) END) AS score_gesta, 
-                          T.nrosemas_actual,T.hemoglo
-                      FROM (
-                          SELECT 
-                              X.iduser, CAST(Y.hemoglo AS Float) AS hemoglo, X.fecha, 
-                              COUNT(DISTINCT X.foto) AS total_pictu, X.nro_sema,
-                              (CASE WHEN Y.calcu_nrodias > 0 THEN (Y.calcu_nrosema + 1) ELSE Y.calcu_nrosema END) 
-                              AS nrosemas_actual
-                          FROM T_05_REGISTRO_SUPLEMENTOS X
-                          JOIN T_05_ETAPA_GESTACIONAL Y ON Y.id = X.iduser  
-                          WHERE X.iduser = ? AND X.fecha <= DATE('now', '-5 hours') 
-                          GROUP BY X.fecha
-                      ) AS T
-                      JOIN T_05_DIAS_GESTACION Z ON T.iduser = Z.iduser AND T.fecha = Z.fec_diagesta
-                      WHERE T.iduser = ?
-                  ) AS W
-                  JOIN T_LECT_SEMANAS S ON S.nro_semana = W.nro_sema
-                  GROUP BY W.iduser, W.nro_sema, S.video_group
-              ) AS P
-              GROUP BY iduser, video_group, nrosemas_actual
-          ) AS H
-      ) AS U
-      LEFT JOIN T_LECT_SEMANAS F ON F.nro_semana = U.video_group
-      WHERE RTRIM(U.nrosemas_actual) IN (RTRIM(U.nro_sema_combinado))
-  ) AS R
-  ORDER BY R.orden_video DESC, R.video_group DESC;
-      `;     
-      
-      //esto comente de la consulta (AND T.nro_sema = Z.nroseman) ya que en T_05_REGISTRO_SUPLEMENTOS el nroseman esta mal 02112025
-      //JOIN T_05_DIAS_GESTACION Z ON T.iduser = Z.iduser AND T.fecha = Z.fec_diagesta AND T.nro_sema = Z.nroseman
-
+      SELECT R.iduser,R.score_gesta as total_score_sumado,R.nrosemas_actual,R.hemoglo,						
+														CASE
+														WHEN R.hemoglo < 11 AND IFNULL(R.nrosemas_actual, 0) = 8 THEN 'Valiente guerrera'
+														WHEN R.hemoglo < 11 AND IFNULL(R.nrosemas_actual, 0) = 9 THEN 'Valiente guerrera'
+														WHEN R.hemoglo < 11 AND IFNULL(R.nrosemas_actual, 0) = 10 THEN 'Valiente guerrera'
+														WHEN R.hemoglo < 11 AND IFNULL(R.nrosemas_actual, 0) = 11 THEN 'Despierta guerrera'
+														WHEN R.hemoglo < 11 AND IFNULL(R.nrosemas_actual, 0) = 12 THEN 'Despierta guerrera'
+														WHEN R.hemoglo < 11 AND IFNULL(R.nrosemas_actual, 0) = 13 THEN 'Despierta guerrera'						
+														WHEN R.hemoglo >= 11 AND IFNULL(R.nrosemas_actual, 0) = 14 THEN 'Iniciadora del hierro'
+														WHEN R.hemoglo >= 11 AND IFNULL(R.nrosemas_actual, 0) = 15 THEN 'Iniciadora del hierro'
+														WHEN R.hemoglo >= 11 AND IFNULL(R.nrosemas_actual, 0) = 16 THEN 'Iniciadora del hierro'
+														WHEN R.hemoglo >= 11 AND IFNULL(R.nrosemas_actual, 0) = 17 THEN 'Aspirante del hierro'
+														WHEN R.hemoglo >= 11 AND IFNULL(R.nrosemas_actual, 0) = 18 THEN 'Aspirante del hierro'
+														WHEN R.hemoglo >= 11 AND IFNULL(R.nrosemas_actual, 0) = 19 THEN 'Aspirante del hierro'
+														WHEN R.hemoglo >= 11 AND IFNULL(R.nrosemas_actual, 0) = 20 THEN 'Exploradora del hierro'
+														WHEN R.hemoglo >= 11 AND IFNULL(R.nrosemas_actual, 0) = 21 THEN 'Exploradora del hierro'
+														WHEN R.hemoglo >= 11 AND IFNULL(R.nrosemas_actual, 0) = 22 THEN 'Exploradora del hierro'
+														WHEN R.hemoglo >= 11 AND IFNULL(R.nrosemas_actual, 0) = 23 THEN 'Guerrera del hierro'
+														WHEN R.hemoglo >= 11 AND IFNULL(R.nrosemas_actual, 0) = 24 THEN 'Guerrera del hierro'
+														WHEN R.hemoglo >= 11 AND IFNULL(R.nrosemas_actual, 0) = 25 THEN 'Guerrera del hierro'
+														WHEN R.hemoglo >= 11 AND IFNULL(R.nrosemas_actual, 0) = 26 THEN 'Defensora del hierro'
+														WHEN R.hemoglo >= 11 AND IFNULL(R.nrosemas_actual, 0) = 27 THEN 'Defensora del hierro'
+														WHEN R.hemoglo >= 11 AND IFNULL(R.nrosemas_actual, 0) = 28 THEN 'Defensora del hierro'
+														WHEN R.hemoglo >= 11 AND IFNULL(R.nrosemas_actual, 0) = 29 THEN 'Dama de hierro'
+														WHEN R.hemoglo >= 11 AND IFNULL(R.nrosemas_actual, 0) = 30 THEN 'Dama de hierro'
+														WHEN R.hemoglo >= 11 AND IFNULL(R.nrosemas_actual, 0) = 31 THEN 'Dama de hierro'
+														WHEN R.hemoglo >= 11 AND IFNULL(R.nrosemas_actual, 0) = 32 THEN 'Princesa de hierro'
+														WHEN R.hemoglo >= 11 AND IFNULL(R.nrosemas_actual, 0) = 33 THEN 'Princesa de hierro'
+														WHEN R.hemoglo >= 11 AND IFNULL(R.nrosemas_actual, 0) = 34 THEN 'Princesa de hierro'
+														WHEN R.hemoglo >= 11 AND IFNULL(R.nrosemas_actual, 0) = 35 THEN 'Reina de hierro'
+														WHEN R.hemoglo >= 11 AND IFNULL(R.nrosemas_actual, 0) = 36 THEN 'Reina de hierro'
+														WHEN R.hemoglo >= 11 AND IFNULL(R.nrosemas_actual, 0) = 37 THEN 'Reina de hierro'
+														WHEN R.hemoglo >= 11 AND IFNULL(R.nrosemas_actual, 0) = 38 THEN 'Emperatriz de hierro'
+														WHEN R.hemoglo >= 11 AND IFNULL(R.nrosemas_actual, 0) = 39 THEN 'Emperatriz de hierro'
+														WHEN R.hemoglo >= 11 AND IFNULL(R.nrosemas_actual, 0) = 40 THEN 'Emperatriz de hierro'
+														ELSE 'Iniciadora del hierro'
+														END AS level_gesta
+														FROM (
+														SELECT G.iduser,
+                                SUM(IFNULL(G.score_gesta, 0)) as score_gesta,
+                                G.nrosemas_actual,G.hemoglo
+														FROM (
+														SELECT
+                                T.iduser, T.semanita_actual as nro_sema,
+                                (CASE WHEN T.hemoglo < 11 THEN (total_pictu * 5) ELSE (total_pictu * 10) END) AS score_gesta,
+                                M.nroseman as nrosemas_actual,T.fecha,T.hemoglo
+                            FROM (								
+                                SELECT
+                                    X.iduser, CAST(Y.hemoglo AS Float) AS hemoglo, X.fecha,
+                                    COUNT(DISTINCT X.foto) AS total_pictu, X.nro_sema,
+                                    (CASE WHEN Y.calcu_nrodias > 0 THEN (Y.calcu_nrosema + 1) ELSE Y.calcu_nrosema END)
+                                    AS nrosemas_actual,MAX(D.nroseman) AS semanita_actual
+                                FROM T_05_REGISTRO_SUPLEMENTOS X
+                                JOIN T_05_ETAPA_GESTACIONAL Y ON Y.id = X.iduser
+																JOIN T_05_DIAS_GESTACION D ON D.iduser = X.iduser AND D.fec_diagesta = X.fecha
+                                WHERE X.iduser = ? AND X.fecha <= DATE('now')
+                                GROUP BY X.fecha
+                            ) AS T  
+														left join (												
+														select A.iduser,A.nroseman from T_05_DIAS_GESTACION A
+														JOIN(
+														select iduser,MAX(fecha) as fecha from T_05_REGISTRO_SUPLEMENTOS  														
+														WHERE iduser = ?
+														) B ON  B.iduser = A.iduser AND B.fecha = A.fec_diagesta
+														LIMIT 1													
+														) M ON M.iduser = T.iduser
+                            WHERE T.iduser = ?
+														) AS G
+														WHERE G.nro_sema = G.nrosemas_actual
+														GROUP BY G.iduser
+														) AS R;
+                        `;  
+                        
       const results = await db.getAllAsync(query, [
         user.id, 
+        user.id,
         user.id
       ]);
       
@@ -746,7 +732,7 @@ export default function RecompensasList({ route }) {
           >
             <View className="flex flex-row items-center justify-center">
               <MaterialIcons name="movie" size={20} color={selectedTab === 3 ? 'white' : 'gray'} style={{ marginRight: 4 }} />
-              <Text className="ml-1 text-white font-bold text-[15px]">Reels</Text>
+              <Text className="ml-1 text-white font-bold text-[15px]">Recetas</Text>
             </View>
           </TouchableOpacity>
         </View>
