@@ -21,6 +21,7 @@ import { addDays, format,differenceInDays } from 'date-fns';
 import Constants from 'expo-constants';
 import * as Notifications from "expo-notifications";
 import { setupNotifications, registerBackgroundSync, performSync } from "./Apps/Services/syncTask";
+import { setupNotificationsBaby, registerDailyAlarms } from "./Apps/Services/alarmaTask";
 import { NetworkProvider,getCurrentNetworkState } from "./Apps/Context/NetworkContext";
 import { NetworkBanner } from "./Apps/Components/Views/NetworkBanner";
 import { apiFetch } from './Apps/Services/api';
@@ -766,7 +767,11 @@ export default function App() {
       // ⚙️ 2. Registrar tarea de background (se ejecuta aún si la app está cerrada)
       await registerBackgroundSync();
 
-      // ⚙️ 3. Ejecutar sincronización periódica en foreground (cada 1 minuto)
+      // ⚙️ Programar alarmas exactas del bebé (09:15, 18:30, 19:25)
+      await setupNotificationsBaby();
+      await registerDailyAlarms();
+
+      // ⚙️ 3. Ejecutar sincronización periódica en foreground (cada 8 minuto)
       const interval = setInterval(async () => {
         console.log("⏱️ Ejecutando sync en foreground...");
         await performSync();
@@ -998,7 +1003,13 @@ const LoginScreen = ({navigation}) => {
         const fec_proba_parto = infogesta?.fec_proba_parto || null;        
         const eco_nro_sem_emb = infogesta?.eco_nro_sem_emb || null; 
         const eco_nro_dias_emb = infogesta?.eco_nro_dias_emb || null;        
-        const hemoglo = infogesta?.hemoglo || null;      
+        const hemoglo = infogesta?.hemoglo || null;
+        
+        //ADD 12112025
+        await SecureStore.deleteItemAsync('userlogintask');              
+        await SecureStore.setItemAsync('userlogintask', validUser.id);
+        //
+
 
         if(opcgesta!=null && hemoglo!=null && (fur !=null || fec_proba_parto !=null || (eco_nro_sem_emb !=null || eco_nro_dias_emb !=null) ) ){
           Alert.alert('Correcto', `Login Exitoso`);  

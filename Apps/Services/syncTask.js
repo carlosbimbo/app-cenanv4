@@ -5,8 +5,10 @@ import { openDatabaseSync } from "expo-sqlite";
 import { apiFetch } from "./api";
 import { getCurrentNetworkState } from "../Context/NetworkContext";
 import { Platform } from "react-native";
+//import { waitForUnlock, acquireTaskLock, releaseTaskLock } from "../Utils/TaskCoordinator";
 
 const TASK_NAME = "SYNC_TASK";
+const SYNC_CHANNEL_ID = "sync_channel"; // 👈 Canal exclusivo para la sincronización
 
 // 🧩 Configuración inicial de notificaciones (debe llamarse al iniciar la app)
 export async function setupNotifications() {
@@ -34,17 +36,18 @@ export async function setupNotifications() {
       return;
     }
 
-    // 🟢 Canal de notificaciones en Android
+    // 🟢 Canal de notificaciones en Android (canal separado para sincronización)
     if (Platform.OS === "android") {
-      await Notifications.setNotificationChannelAsync("default", {
+      await Notifications.setNotificationChannelAsync(SYNC_CHANNEL_ID, {
         name: "Sincronización automática",
+        description: "Canal exclusivo para las notificaciones de sincronización de datos.",
         importance: Notifications.AndroidImportance.HIGH,
         sound: "default",
         vibrationPattern: [0, 250, 250, 250],
         lightColor: "#FF231F7C",
         lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
       });
-      console.log("📱 Canal de notificaciones Android configurado");
+      console.log("📱 Canal de notificaciones Android configurado (SYNC_CHANNEL_ID)");
     }
   } catch (error) {
     console.error("❌ Error configurando notificaciones:", error);
@@ -54,6 +57,9 @@ export async function setupNotifications() {
 // 🧩 Función principal de sincronización
 export async function performSync() {
   try {
+    /*await waitForUnlock(); // espera a que no haya otra tarea
+    await acquireTaskLock("SYNC_TASK"); // bloquea mientras se ejecuta*/
+
     const { isConnected, isInternetReachable } = getCurrentNetworkState();
     if (!(isConnected || isInternetReachable)) {
       console.log("⚠️ Sin conexión, omitiendo sincronización");
@@ -90,7 +96,6 @@ export async function performSync() {
           true
         );
         console.log("✅ Users sincronizadas correctamente");
-        //console.log("📦 Respuesta completa:", JSON.stringify(sync_users, null, 2));
         usersSynced = users.length;
       } catch (err) {
         console.log("❌ Error sincronizando users:", err.message);
@@ -105,7 +110,6 @@ export async function performSync() {
           true
         );
         console.log("✅ Etapas sincronizadas correctamente");
-        //console.log("📦 Respuesta completa:", JSON.stringify(sync_eta, null, 2));
         etapasSynced = etapas.length;
       } catch (err) {
         console.log("❌ Error sincronizando etapas:", err.message);
@@ -119,8 +123,7 @@ export async function performSync() {
           { method: "POST", body: JSON.stringify(eventos) },
           true
         );
-        console.log("✅ Eventos sincronizadas correctamente");
-        //console.log("📦 Respuesta completa:", JSON.stringify(sync_events, null, 2));
+        console.log("✅ Eventos sincronizados correctamente");
         eventosSynced = eventos.length;
       } catch (err) {
         console.log("❌ Error sincronizando eventos:", err.message);
@@ -135,7 +138,6 @@ export async function performSync() {
           true
         );
         console.log("✅ Suplementos sincronizados correctamente");
-        //console.log("📦 Respuesta completa:", JSON.stringify(sync_suple, null, 2));
         suplemeSynced = supleme.length;
       } catch (err) {
         console.log("❌ Error sincronizando suplementos:", err.message);
@@ -150,7 +152,6 @@ export async function performSync() {
           true
         );
         console.log("✅ Agenda Gestacional sincronizadas correctamente");
-        //console.log("📦 Respuesta completa:", JSON.stringify(sync_agenda, null, 2));
         agendaSynced = agendages.length;
       } catch (err) {
         console.log("❌ Error sincronizando Agenda Gestacional:", err.message);
@@ -164,21 +165,20 @@ export async function performSync() {
           { method: "POST", body: JSON.stringify(diasges) },
           true
         );
-        console.log("✅ Dias Gestacion sincronizados correctamente");
-        //console.log("📦 Respuesta completa:", JSON.stringify(sync_diasges, null, 2));
+        console.log("✅ Días Gestación sincronizados correctamente");
         diasgesSynced = diasges.length;
       } catch (err) {
-        console.log("❌ Error sincronizando dias Gestacion:", err.message);
+        console.log("❌ Error sincronizando Días Gestación:", err.message);
       }
     }
 
-    // 🟢 Mostrar notificación de éxito
+    // 🟢 Mostrar notificación de éxito con canal exclusivo
     await Notifications.scheduleNotificationAsync({
       content: {
         title: "✅ Sincronización exitosa",
-        body: `Usuarios: ${usersSynced}, Etapas: ${etapasSynced}, Eventos: ${eventosSynced}, Suplementos: ${suplemeSynced}, Agenda: ${agendaSynced}, DiasGesta: ${diasgesSynced}`,
+        body: `Usuarios: ${usersSynced}, Etapas: ${etapasSynced}, Eventos: ${eventosSynced}, Suplementos: ${suplemeSynced}, Agenda: ${agendaSynced}, Días: ${diasgesSynced}`,
         sound: "default",
-        channelId: "default", // 👈 Obligatorio en Android
+        channelId: SYNC_CHANNEL_ID, // 👈 Canal específico
       },
       trigger: null,
     });
@@ -187,17 +187,19 @@ export async function performSync() {
   } catch (err) {
     console.error("❌ Error general en sincronización:", err);
 
-    // 🔴 Notificación de error
+    // 🔴 Notificación de error con canal exclusivo
     await Notifications.scheduleNotificationAsync({
       content: {
         title: "❌ Error en sincronización",
         body: err.message ?? "Error desconocido",
         sound: "default",
-        channelId: "default",
+        channelId: SYNC_CHANNEL_ID,
       },
       trigger: null,
     });
-  }
+  }/*finally {
+    await releaseTaskLock();
+  }*/
 }
 
 // 🔹 Define la tarea background
@@ -218,7 +220,7 @@ export async function registerBackgroundSync() {
     }
 
     await BackgroundFetch.registerTaskAsync(TASK_NAME, {
-      minimumInterval: 300,//60, // cada 1 minuto (Android limita mínimo ~15min reales)
+      minimumInterval: 300, // cada 8 minutos
       stopOnTerminate: false,
       startOnBoot: true,
     });
