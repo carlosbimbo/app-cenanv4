@@ -10,6 +10,9 @@
     },
     "preview": {
       "distribution": "internal",
+      "env": {
+        "EAS_BUILD": "true"
+      },
       "android": {
         "buildType": "apk"
       }

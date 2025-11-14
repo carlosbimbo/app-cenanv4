@@ -1,10 +1,12 @@
 module.exports = function (api) {
   api.cache(true);
+  const isEAS = process.env.EAS_BUILD === "true";
+
   return {
-    presets: ['babel-preset-expo'],
+    presets: ["babel-preset-expo"],
     plugins: [
-      "nativewind/babel", // Plugin de NativeWind
-      "react-native-reanimated/plugin", // Debe ser el último plugin
-    ],
+      !isEAS && "nativewind/babel",
+      "react-native-reanimated/plugin",
+    ].filter(Boolean),
   };
 };
