@@ -316,6 +316,7 @@ Notifications.addNotificationReceivedListener(async (notification) => {
   await scheduleNextOccurrence(alarmDef);
 });
 
+/*
 // -----------------------------------------------------------------------------
 // Monitor de respaldo cada minuto
 // -----------------------------------------------------------------------------
@@ -346,3 +347,4 @@ setInterval(async () => {
     }
   }
 }, 60 * 1000);
+*/
