@@ -92,6 +92,7 @@
           "react-native-map-clustering",
           "react-native-maps-directions",
           "react-native-dropdown-picker",
+          "react-native-progress",
           "date-fns",
           "tailwindcss"
         ],
