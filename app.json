@@ -94,13 +94,6 @@
       ],
       "expo-background-task",
       "expo-secure-store"
-    ],
-    "doctor": {
-      "reactNativeDirectoryCheck": {
-        "exclude": [
-          "react-native-progress"
-        ]
-      }
-    } 
+    ]
   }
 }
