@@ -35,7 +35,7 @@ export default function TipsGestacionList({ route }) {
       }}
     >
       <Text style={{ fontSize: 18, marginBottom: 10, fontWeight: "bold" }}>
-        En Construcción
+        En Construcción...
       </Text>
      
     </SafeAreaView>
