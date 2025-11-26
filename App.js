@@ -748,6 +748,71 @@ const initializeDatabase = async(db) => {
         INSERT INTO T_05_REELS_VIDEO (idreel,descrip,rutavideo,obs) VALUES (30, 'Cau cau', 'JpzCQWOkcfA', NULL);      
         `);
 
+        await db.execAsync(`
+        DROP VIEW IF EXISTS vista_gesta;
+        CREATE VIEW IF NOT EXISTS vista_gesta AS
+        SELECT 
+            G.iduser,
+            SUM(IFNULL(G.score_gesta, 0)) AS total_score_sumado,
+            G.nrosemas_actual,
+            G.hemoglo
+        FROM (			
+            SELECT
+                T.iduser, T.semanita_actual AS nro_sema,
+                (CASE WHEN T.hemoglo < 11 THEN (total_pictu * 5) ELSE (total_pictu * 10) END) AS score_gesta,
+                M.nroseman AS nrosemas_actual, T.fecha, T.hemoglo
+            FROM (								
+                SELECT
+                    X.iduser, CAST(Y.hemoglo AS FLOAT) AS hemoglo, X.fecha,
+                    COUNT(DISTINCT (X.idsuple || X.iduser)) AS total_pictu, X.nro_sema,
+                    (CASE WHEN Y.calcu_nrodias > 0 THEN (Y.calcu_nrosema + 1) ELSE Y.calcu_nrosema END)
+                    AS nrosemas_actual,
+                    MAX(D.nroseman) AS semanita_actual
+                FROM T_05_REGISTRO_SUPLEMENTOS X
+                JOIN T_05_ETAPA_GESTACIONAL Y ON Y.id = X.iduser
+                JOIN T_05_DIAS_GESTACION D ON D.iduser = X.iduser AND D.fec_diagesta = X.fecha
+                GROUP BY X.iduser,X.fecha
+            ) AS T  
+            LEFT JOIN (
+                SELECT A.iduser, A.nroseman
+                FROM T_05_DIAS_GESTACION A
+                JOIN (
+                    SELECT iduser, MAX(fecha) AS fecha
+                    FROM T_05_REGISTRO_SUPLEMENTOS  
+                    GROUP BY iduser
+                ) B ON B.iduser = A.iduser AND B.fecha = A.fec_diagesta
+                
+            ) M ON M.iduser = T.iduser					
+        ) AS G
+        WHERE G.nro_sema = G.nrosemas_actual
+        GROUP BY G.iduser;
+      `); 
+      
+      await db.execAsync(`
+        DROP VIEW IF EXISTS vista_gesta_first;
+        CREATE VIEW IF NOT EXISTS vista_gesta_first AS
+        SELECT 
+        R.id,
+        0 as total_score_sumado,
+        R.calcu_nrosema as nrosemas_actual,
+        R.hemoglo,
+        CASE
+          WHEN R.hemoglo < 11 AND R.calcu_nrosema BETWEEN 8 AND 10 THEN 'Valiente guerrera'
+          WHEN R.hemoglo < 11 AND R.calcu_nrosema BETWEEN 11 AND 13 THEN 'Despierta guerrera'
+          WHEN R.hemoglo >= 11 AND R.calcu_nrosema BETWEEN 14 AND 16 THEN 'Iniciadora del hierro'
+          WHEN R.hemoglo >= 11 AND R.calcu_nrosema BETWEEN 17 AND 19 THEN 'Aspirante del hierro'
+          WHEN R.hemoglo >= 11 AND R.calcu_nrosema BETWEEN 20 AND 22 THEN 'Exploradora del hierro'
+          WHEN R.hemoglo >= 11 AND R.calcu_nrosema BETWEEN 23 AND 25 THEN 'Guerrera del hierro'
+          WHEN R.hemoglo >= 11 AND R.calcu_nrosema BETWEEN 26 AND 28 THEN 'Defensora del hierro'
+          WHEN R.hemoglo >= 11 AND R.calcu_nrosema BETWEEN 29 AND 31 THEN 'Dama de hierro'
+          WHEN R.hemoglo >= 11 AND R.calcu_nrosema BETWEEN 32 AND 34 THEN 'Princesa de hierro'
+          WHEN R.hemoglo >= 11 AND R.calcu_nrosema BETWEEN 35 AND 37 THEN 'Reina de hierro'
+          WHEN R.hemoglo >= 11 AND R.calcu_nrosema BETWEEN 38 AND 40 THEN 'Emperatriz de hierro'
+          ELSE 'Iniciadora del hierro'
+        END AS level_gesta
+      FROM T_05_ETAPA_GESTACIONAL R;
+      `);
+
         console.log('Database initialized !');
     } catch (error) {
         console.log('Error while initializing the database : ', error);
@@ -1063,7 +1128,7 @@ const LoginScreen = ({navigation}) => {
           <ScrollView>
             <View className="flex-1 bg-gray-100">
               <View className="p-8 bg-fuchsia-800 rounded-t-3xl shadow-md w-full">
-                <Text className="text-[30px] font-bold text-white text-center mt-6">
+                <Text className="text-[35px] font-bold text-white text-center mt-6">
                   Bienvenidas
                 </Text>                               
               </View>

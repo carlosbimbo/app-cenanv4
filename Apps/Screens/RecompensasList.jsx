@@ -251,6 +251,78 @@ const VideoConsejosList = ({ user }) => {
   // 🔍 Consulta a la base de datos
   const fetchResumentakesuple = useCallback(async () => {
     try {
+
+      const query = `
+              SELECT
+              W.iduser,
+              W.nroseman,
+              W.nroseman AS video_group,
+              SUM(IFNULL(W.score_gesta, 0)) AS total_score,
+              W.nrosemas_actual,
+              CASE
+                  WHEN SUM(IFNULL(W.score_gesta, 0)) = 0 THEN NULL
+                  WHEN SUM(IFNULL(W.score_gesta, 0)) = 10 THEN tips_emb1_desc
+                  WHEN SUM(IFNULL(W.score_gesta, 0)) = 20 THEN tips_emb1_desc || '|' || tips_emb2_desc
+                  WHEN SUM(IFNULL(W.score_gesta, 0)) = 30 THEN tips_emb1_desc || '|' || tips_emb2_desc || '|' || tips_emb3_desc
+                  WHEN SUM(IFNULL(W.score_gesta, 0)) = 40 THEN tips_emb1_desc || '|' || tips_emb2_desc || '|' || tips_emb3_desc || '|' || tips_cons1_desc
+                  WHEN SUM(IFNULL(W.score_gesta, 0)) > 40 THEN tips_emb1_desc || '|' || tips_emb2_desc || '|' || tips_emb3_desc || '|' || tips_cons1_desc
+                  ELSE NULL
+              END AS descrip_video,
+              CASE
+                  WHEN SUM(IFNULL(W.score_gesta, 0)) = 0 THEN NULL
+                  WHEN SUM(IFNULL(W.score_gesta, 0)) = 10 THEN tips_emb1_ruta
+                  WHEN SUM(IFNULL(W.score_gesta, 0)) = 20 THEN tips_emb1_ruta || '|' || tips_emb2_ruta
+                  WHEN SUM(IFNULL(W.score_gesta, 0)) = 30 THEN tips_emb1_ruta || '|' || tips_emb2_ruta || '|' || tips_emb3_ruta
+                  WHEN SUM(IFNULL(W.score_gesta, 0)) = 40 THEN tips_emb1_ruta || '|' || tips_emb2_ruta || '|' || tips_emb3_ruta || '|' || tips_cons1_ruta
+                  WHEN SUM(IFNULL(W.score_gesta, 0)) > 40 THEN tips_emb1_ruta || '|' || tips_emb2_ruta || '|' || tips_emb3_ruta || '|' || tips_cons1_ruta
+                  ELSE NULL
+              END AS consejos_videoid
+            FROM (        
+                SELECT 
+                    IFNULL(T.iduser,Z.iduser) AS iduser,
+                    Z.nroseman,
+                    IFNULL(T.score_gesta,10) AS score_gesta,
+                    IFNULL(T.nro_sema,(SELECT nro_sema FROM T_05_REGISTRO_SUPLEMENTOS WHERE iduser = ? LIMIT 1)) AS nrosemas_actual,
+                    IFNULL(T.fecha,Z.fec_diagesta) AS fecha,
+                    S.tips_emb1_ruta,
+                    S.tips_emb2_ruta,
+                    S.tips_emb3_ruta,
+                    S.tips_cons1_ruta,
+                    S.tips_emb1_desc,
+                    S.tips_emb2_desc,
+                    S.tips_emb3_desc,
+                    S.tips_cons1_desc
+                FROM T_05_DIAS_GESTACION Z
+                JOIN (
+                    SELECT
+                        T.iduser, T.nro_sema,
+                        (CASE WHEN T.hemoglo < 11 THEN (total_pictu * 5) ELSE (total_pictu * 10) END) AS score_gesta,
+                        T.nrosemas_actual, T.fecha
+                    FROM (
+                        SELECT
+                            X.iduser,
+                            CAST(Y.hemoglo AS FLOAT) AS hemoglo,
+                            X.fecha,
+                            COUNT(DISTINCT (X.idsuple || X.iduser)) AS total_pictu,
+                            (X.nro_sema - 1) as nro_sema,
+                            (CASE WHEN Y.calcu_nrodias > 0 THEN (Y.calcu_nrosema) ELSE Y.calcu_nrosema - 1 END) AS nrosemas_actual
+                        FROM T_05_REGISTRO_SUPLEMENTOS X
+                        JOIN T_05_ETAPA_GESTACIONAL Y ON Y.id = X.iduser
+                        WHERE X.iduser = ?
+                          AND X.fecha <= DATE('now', '-5 hours')
+                        GROUP BY X.fecha
+                    ) AS T
+                    WHERE T.iduser = ?
+                ) T ON T.iduser = Z.iduser AND T.fecha = Z.fec_diagesta
+                JOIN T_LECT_SEMANAS S ON S.nro_semana = (Z.nroseman - 1)
+                WHERE Z.nroseman BETWEEN 13 AND 40
+                  AND Z.fec_diagesta <= DATE('now', '-5 hours')
+            ) AS W
+            GROUP BY W.iduser, W.nroseman
+            ORDER BY W.nroseman DESC;
+      `;
+
+      /*
       const query = `
         SELECT
           W.iduser,
@@ -320,6 +392,7 @@ const VideoConsejosList = ({ user }) => {
         GROUP BY W.iduser, W.nroseman
         ORDER BY W.nroseman DESC;
       `;
+      */
 
       const rstakesupl = await db.getAllAsync(query, [user.id, user.id, user.id]);
       setRawVideos(rstakesupl); // ← guardamos el resultado original
@@ -511,6 +584,7 @@ export default function RecompensasList({ route }) {
   const [profileImage, setProfileImage] = useState('');
   //const [profileImage, setProfileImage] = useState(user.profileImage || null); // URI de la imagen
   const [progressValue, setProgressValue] = useState([]);
+  const [begingestaApp, setBeginGestaApp] = useState([]);
   
   const buttonAnimation = useAnimatedStyle(() => {
     return {
@@ -523,7 +597,37 @@ export default function RecompensasList({ route }) {
   //let progressValue = 0;
   const fetchDaysgestaall = useCallback(async () => {
     try {
-         
+
+      /////////////////Partiendo la query de Puntaje///////////////
+     const query = `
+      SELECT 
+        R.iduser,
+        R.total_score_sumado,
+        R.nrosemas_actual,
+        R.hemoglo,
+        CASE
+          WHEN R.hemoglo < 11 AND R.nrosemas_actual BETWEEN 8 AND 10 THEN 'Valiente guerrera'
+          WHEN R.hemoglo < 11 AND R.nrosemas_actual BETWEEN 11 AND 13 THEN 'Despierta guerrera'
+          WHEN R.hemoglo >= 11 AND R.nrosemas_actual BETWEEN 14 AND 16 THEN 'Iniciadora del hierro'
+          WHEN R.hemoglo >= 11 AND R.nrosemas_actual BETWEEN 17 AND 19 THEN 'Aspirante del hierro'
+          WHEN R.hemoglo >= 11 AND R.nrosemas_actual BETWEEN 20 AND 22 THEN 'Exploradora del hierro'
+          WHEN R.hemoglo >= 11 AND R.nrosemas_actual BETWEEN 23 AND 25 THEN 'Guerrera del hierro'
+          WHEN R.hemoglo >= 11 AND R.nrosemas_actual BETWEEN 26 AND 28 THEN 'Defensora del hierro'
+          WHEN R.hemoglo >= 11 AND R.nrosemas_actual BETWEEN 29 AND 31 THEN 'Dama de hierro'
+          WHEN R.hemoglo >= 11 AND R.nrosemas_actual BETWEEN 32 AND 34 THEN 'Princesa de hierro'
+          WHEN R.hemoglo >= 11 AND R.nrosemas_actual BETWEEN 35 AND 37 THEN 'Reina de hierro'
+          WHEN R.hemoglo >= 11 AND R.nrosemas_actual BETWEEN 38 AND 40 THEN 'Emperatriz de hierro'
+          ELSE 'Iniciadora del hierro'
+        END AS level_gesta
+      FROM vista_gesta R
+      WHERE R.iduser = ?;
+      `;
+      console.log(query);
+      const results = await db.getAllAsync(query, [user.id]);
+      console.log(results);
+      
+      /////////////////Fin Partiendo la query de Puntaje///////////////
+         /*
       const query = `
       SELECT R.iduser,R.score_gesta as total_score_sumado,R.nrosemas_actual,R.hemoglo,						
 														CASE
@@ -574,36 +678,37 @@ export default function RecompensasList({ route }) {
                             FROM (								
                                 SELECT
                                     X.iduser, CAST(Y.hemoglo AS Float) AS hemoglo, X.fecha,
-                                    COUNT(DISTINCT X.foto) AS total_pictu, X.nro_sema,
+                                    COUNT(DISTINCT (X.idsuple || X.iduser)) AS total_pictu, X.nro_sema,
                                     (CASE WHEN Y.calcu_nrodias > 0 THEN (Y.calcu_nrosema + 1) ELSE Y.calcu_nrosema END)
                                     AS nrosemas_actual,MAX(D.nroseman) AS semanita_actual
                                 FROM T_05_REGISTRO_SUPLEMENTOS X
                                 JOIN T_05_ETAPA_GESTACIONAL Y ON Y.id = X.iduser
 																JOIN T_05_DIAS_GESTACION D ON D.iduser = X.iduser AND D.fec_diagesta = X.fecha
                                 WHERE X.iduser = ? AND X.fecha <= DATE('now')
-                                GROUP BY X.fecha
+                                GROUP BY X.iduser,X.fecha
                             ) AS T  
 														left join (												
 														select A.iduser,A.nroseman from T_05_DIAS_GESTACION A
 														JOIN(
 														select iduser,MAX(fecha) as fecha from T_05_REGISTRO_SUPLEMENTOS  														
 														WHERE iduser = ?
-														) B ON  B.iduser = A.iduser AND B.fecha = A.fec_diagesta
-														LIMIT 1													
+														) B ON  B.iduser = A.iduser AND B.fecha = A.fec_diagesta																									
 														) M ON M.iduser = T.iduser
                             WHERE T.iduser = ?
 														) AS G
 														WHERE G.nro_sema = G.nrosemas_actual
 														GROUP BY G.iduser
 														) AS R;
-                        `;  
-                        
+                        `; 
+
+      console.log('query de Puntaje!!!! :', query,user.id);   
+
       const results = await db.getAllAsync(query, [
         user.id, 
         user.id,
         user.id
       ]);
-      
+        */    
       console.log('Datos de la todos los dias de gestacion KKKA fetchDaysgestaall :', results);
       setProgressValue(results);
       //setProgressValue(results[0].total_score_sumado);
@@ -632,9 +737,26 @@ export default function RecompensasList({ route }) {
   useEffect(() => {
     fetchImgProfile();
   }, [fetchImgProfile]);
+
+  //
+  const getgestabeginapp = useCallback(async () => {
+    try {      
+      const results = await db.getAllAsync('SELECT * FROM vista_gesta_first WHERE id = ?', [user.id]); 
+      console.log('Datos getgestabeginapp :', results);
+      setBeginGestaApp(results);      
+    } catch (error) {
+      console.error('Error al obtener datos del getgestabeginapp:', error);
+    }
+  }, [db, user.id]);
+
+  useEffect(() => {
+    getgestabeginapp();
+  }, [getgestabeginapp]);
+  //
    
-  //let vtotal_score = progressValue.total_score_sumado;
-  //console.log('progressValue ONLY xxx :', vtotal_score);
+  /*let vtotal_scorexxx = progressValue.total_score_sumado;
+  console.log('progressValue ONLY xxx :', vtotal_scorexxx);*/
+
   let vtotal_score = 0;
   let vlevel_gesta = '';
   progressValue.map((infges) => {
@@ -642,6 +764,14 @@ export default function RecompensasList({ route }) {
     vlevel_gesta = infges.level_gesta;
   })
   console.log('progressValue ONLY SSSS :', vtotal_score);
+
+ //gesta into first app 25112025
+ let zlevel_gesta = '';
+ begingestaApp.map((infges) => {
+  zlevel_gesta = infges.level_gesta;
+ })
+ console.log('begingestaApp ONLY okas :', zlevel_gesta);
+//fin gesta into first app 25112025
 
   return (
     <SafeAreaView className="flex-1 bg-gray-100">
@@ -659,7 +789,7 @@ export default function RecompensasList({ route }) {
           <View style={styles.userTextContainer}>
             <Text style={styles.userInfoText}>
             <Text style={styles.highlightText}>{user.nombape}</Text>, tu nivel de puntuación acredita que eres una{" "}
-              <Text style={styles.highlightText}>{vlevel_gesta} <FontAwesome6 name="medal" size={24} color="#85268d" style={styles.trophyIcon} /></Text>
+              <Text style={styles.highlightText}>{vlevel_gesta || zlevel_gesta} <FontAwesome6 name="medal" size={24} color="#85268d" style={styles.trophyIcon} /></Text>
             </Text>
           </View>
           

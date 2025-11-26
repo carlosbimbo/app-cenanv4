@@ -138,7 +138,8 @@ export default function HomeScreen({ route }) {
           const formattedItem = {
             nrosem: nrosem,
             name: desc_img,
-            semat: `Estas en tu semana numero : ${nrosem} de embarazo.`,
+            //semat: `Estas en tu semana numero : ${nrosem} de embarazo.`,
+            semat: `Tienes ${calcu_nrosema} semanas de embarazo`,
             alturabb: altura_bb,
             pesobb: peso_bb,            
             cal_nrosema: calcu_nrosema,

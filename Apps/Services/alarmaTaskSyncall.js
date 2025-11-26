@@ -173,7 +173,7 @@ export async function alarmabbSync() {
 
       await Notifications.scheduleNotificationAsync({
         content: {
-          title: "💧👶 Agu Agu del BB",
+          title: "💧👶 GestApp te recuerda",
           body: alarm.message,
           sound: "default",
           channelId: SYNC_ALARMA_CHANNEL_ID,

@@ -28,8 +28,8 @@ export default function MapsDetail({ route }) {
   const [region, setRegion] = useState({
     latitude: -12.0464,
     longitude: -77.0428,
-    latitudeDelta: 0.1,
-    longitudeDelta: 0.1,
+    latitudeDelta: 0.005,
+    longitudeDelta: 0.005,
   });
   const mapRef = useRef(null);
 
@@ -74,8 +74,8 @@ export default function MapsDetail({ route }) {
       const newRegion = {
         latitude: location.lat,
         longitude: location.lng,
-        latitudeDelta: 0.01,
-        longitudeDelta: 0.01,
+        latitudeDelta: 0.005,
+        longitudeDelta: 0.005,
       };
 
       setRegion(newRegion);

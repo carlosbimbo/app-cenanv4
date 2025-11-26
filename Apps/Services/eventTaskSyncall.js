@@ -132,7 +132,7 @@ export async function eventosSync() {
 
       await Notifications.scheduleNotificationAsync({
         content: {
-          title: "💊⏰ Recordatorio de Eventos",
+          title: "💊⏰ GestApp te recuerda",
           body: alarm.message,
           sound: "default", 
           channelId: SYNC_EVENTOS_CHANNEL_ID,
