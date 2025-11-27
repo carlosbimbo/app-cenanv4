@@ -314,7 +314,7 @@ const VideoConsejosList = ({ user }) => {
                     ) AS T
                     WHERE T.iduser = ?
                 ) T ON T.iduser = Z.iduser AND T.fecha = Z.fec_diagesta
-                JOIN T_LECT_SEMANAS S ON S.nro_semana = (Z.nroseman - 1)
+                JOIN T_LECT_SEMANAS S ON S.nro_semana = Z.nroseman
                 WHERE Z.nroseman BETWEEN 13 AND 40
                   AND Z.fec_diagesta <= DATE('now', '-5 hours')
             ) AS W

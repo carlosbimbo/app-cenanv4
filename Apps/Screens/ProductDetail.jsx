@@ -102,8 +102,13 @@ export default function ProductDetail({navigation}) {
           style={{ fontSize: isSmallDevice ? 13 : 15 }}
         >
           Edad Gestacional:{' '}
-          <Text className="text-purple-700">{detbaby.cal_nrosema} Semanas</Text> y{' '}
-          <Text className="text-green-600">{detbaby.cal_nrodias} Días</Text>
+          <Text className="text-purple-700">{detbaby.cal_nrosema} Semanas</Text> 
+          {Number(detbaby.cal_nrodias) > 0 && (
+            <>
+              {' '}y{' '}
+              <Text className="text-green-600">{detbaby.cal_nrodias} Días</Text>
+            </>
+          )}
         </Text>
       </View>
 

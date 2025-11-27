@@ -29,6 +29,7 @@ import * as Crypto from 'expo-crypto';
 import { syncCenanData } from './Apps/Services/syncGesta';
 import { setupAlarmNotifications, registerAlarmBackgroundTask,alarmabbSync  } from "./Apps/Services/alarmaTaskSyncall";
 import { setupEventosNotifications, registerEventosBackgroundTask,eventosSync  } from "./Apps/Services/eventTaskSyncall";
+import DateTimePicker from "@react-native-community/datetimepicker";
 
 //initialize the database
 const initializeDatabase = async(db) => {
@@ -64,7 +65,8 @@ const initializeDatabase = async(db) => {
                 calcu_nrosema INT NULL,
                 calcu_nrodias INT NULL,
                 calcu_nrodias_parto INT NULL,
-                calcu_fecaprox_parto varchar(10) NULL
+                calcu_fecaprox_parto varchar(10) NULL,
+                eco_fechaori varchar(10) NULL
                 );
         `);
 
@@ -1090,8 +1092,6 @@ const LoginScreen = ({navigation}) => {
         await SecureStore.deleteItemAsync('userlogintask');              
         await SecureStore.setItemAsync('userlogintask', validUser.id);
         //
-
-
         if(opcgesta!=null && hemoglo!=null && (fur !=null || fec_proba_parto !=null || (eco_nro_sem_emb !=null || eco_nro_dias_emb !=null) ) ){
           Alert.alert('Correcto', `Login Exitoso`);  
           console.log('Ingrese!! TabNavigator');
@@ -1101,7 +1101,7 @@ const LoginScreen = ({navigation}) => {
           Alert.alert('Correcto', `Login Exitoso`);
           navigation.navigate('Home', {user:validUser});
         }
-
+       
         //
 
                 //Alert.alert('Correcto', `Login Exitoso ${validUser.id}`);
@@ -2086,6 +2086,7 @@ const insertAllDaysGestacion = async (db, startDate, userId) => {
 const EcoScreen = ({navigation, route}) => {
     const db = useSQLiteContext();
     const { user } = route.params;
+    const [selectedDate, setSelectedDate] = useState("");
 
     const [open, setOpen] = useState(false);
     const [value, setValue] = useState(null);
@@ -2095,6 +2096,7 @@ const EcoScreen = ({navigation, route}) => {
   
     const [errorSemana, setErrorSemana] = useState(false);
     const [errorDias, setErrorDias] = useState(false);
+    const [errorFec, setErrorFec] = useState(false);
 
    // Cargar datos de la base de datos al montar el componente
   useEffect(() => {
@@ -2108,6 +2110,9 @@ const EcoScreen = ({navigation, route}) => {
         if (validUserEco) {
           setValue(String(validUserEco.eco_nro_sem_emb) || '');
           setValue2(String(validUserEco.eco_nro_dias_emb) || '');
+          if (validUserEco.eco_fechaori) {
+            setSelectedDate(validUserEco.eco_fechaori); // Debe venir como 'yyyy-MM-dd'
+          }
         } else {
           setValue('');
           setValue2('');
@@ -2182,23 +2187,39 @@ const [items2, setItems2] = useState([
 
 const handleButtonPress = async () => {  
   try {
+    
+    if (!selectedDate) {
+      setErrorFec(true); 
+      setErrorSemana(false); 
+      setErrorDias(false);        
+      Alert.alert("Error", "Por favor, completar el valor de Fecha.");
+      return;
+    }
+
+    console.log('mira mi fechita ecoxxx',selectedDate);
+    const wwww = new Date(selectedDate + "T00:00:00Z").toISOString();
+    console.log('gaby2711 today wwww:', wwww);
 
     //Alert.alert('Error combate value :', value,value2);
     if (!value || value == 'null') {
       setErrorSemana(true); // Resalta el combo de semanas
       setErrorDias(false); // Asegura que el otro combo no se marque
+      setErrorFec(false);      
       Alert.alert('Error', 'Por favor, selecciona una opción en el numero de semanas.');
       return;
     }
     if (!value2 || value2 == 'null') {
       setErrorDias(true); // Resalta el combo de días
       setErrorSemana(false); // Asegura que el otro combo no se marque
+      setErrorFec(false);     
       Alert.alert('Error', 'Por favor, selecciona una opción en el numero de dias.');
       return;
     }
 
     //calculo semanas y dias de embarazo add 16122024
-    const today = new Date(); 
+    //const today = new Date(); 
+    const today = new Date(selectedDate + "T00:00:00Z").toISOString();
+    console.log('gaby2711 today:', today);
    /*const pastDate = new Date(selectedDate);
     const difference = differenceInDays(pastDate,today);
     console.log('Diferencia en días:', difference);
@@ -2241,15 +2262,15 @@ const handleButtonPress = async () => {
 
     if (valUserEco) {
       await db.runAsync(
-        'UPDATE T_05_ETAPA_GESTACIONAL SET eco_nro_sem_emb = ?, eco_nro_dias_emb = ?,calcu_nrosema = ?,calcu_nrodias = ?,calcu_nrodias_parto = ?,calcu_fecaprox_parto = ? WHERE id = ?',
-        [value, value2,value, value2,nrodiasaprox_parto,cal_fecaprox_parto, user.id]
+        'UPDATE T_05_ETAPA_GESTACIONAL SET eco_nro_sem_emb = ?, eco_nro_dias_emb = ?,calcu_nrosema = ?,calcu_nrodias = ?,calcu_nrodias_parto = ?,calcu_fecaprox_parto = ?,eco_fechaori = ? WHERE id = ?',
+        [value, value2,value, value2,nrodiasaprox_parto,cal_fecaprox_parto,selectedDate, user.id]
       );
       Alert.alert('Correcto', 'Registro de Ecografia Actualizado exitosamente!');      
       //navigation.navigate('Home', {user:user});
     } else {
       await db.runAsync(
-        'INSERT INTO T_05_ETAPA_GESTACIONAL (id, eco_nro_sem_emb, eco_nro_dias_emb,calcu_nrosema,calcu_nrodias,calcu_nrodias_parto,calcu_fecaprox_parto) VALUES (?, ?, ?, ?, ?, ?, ?)',
-        [user.id, value, value2,value, value2,nrodiasaprox_parto,cal_fecaprox_parto]
+        'INSERT INTO T_05_ETAPA_GESTACIONAL (id, eco_nro_sem_emb, eco_nro_dias_emb,calcu_nrosema,calcu_nrodias,calcu_nrodias_parto,calcu_fecaprox_parto,eco_fechaori) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        [user.id, value, value2,value, value2,nrodiasaprox_parto,cal_fecaprox_parto,selectedDate]
       );
       Alert.alert('Correcto', 'Registro de Ecografia Registrado exitosamente!');      
       //navigation.navigate('Home', {user:user});         
@@ -2291,8 +2312,10 @@ const handleButtonPress = async () => {
 
 
 };
-  
+
   const [isPressed, setIsPressed] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  
     return (
       <>
       <SafeAreaView className="flex-1 bg-gray-100">
@@ -2304,34 +2327,75 @@ const handleButtonPress = async () => {
               className="w-[75px] h-[75px]"
             />
           </View>
+
+          <View style={styles.containerCombate}>
+  <Text style={styles.label}>Fecha:</Text>
+
+  <TouchableOpacity
+    style={[
+      styles.dateInput,
+      {
+        backgroundColor: errorFec ? 'yellow' : '#f1f5f9',
+        borderColor: errorFec ? '#facc15' : '#cbd5e1',
+        borderWidth: 1,
+        borderRadius: 8,
+      }
+    ]}
+    onPress={() => setShowDatePicker(true)}
+  >
+    <Text style={{ color: selectedDate ? '#000' : '#777' }}>
+      {selectedDate ? selectedDate : "Selecciona una fecha"}
+    </Text>
+  </TouchableOpacity>
+
+  {showDatePicker && (
+    <DateTimePicker
+      value={selectedDate ? new Date(selectedDate) : new Date()}
+      mode="date"
+      display="default"
+      onChange={(event, date) => {
+        setShowDatePicker(false);
+        if (date) {
+          const formatted = format(date, "yyyy-MM-dd");
+          setSelectedDate(formatted);
+          setErrorFec(false);   // ⬅️ Limpia el error al escoger fecha
+        }
+      }}
+    />
+  )}
+</View>
   
           <View style={styles.containerCombate}>
             <Text className="text-lg font-bold mb-4 text-center">Número de Semanas</Text>
   
             <DropDownPicker
-              open={open}
-              value={value}
-              items={items}
-              setOpen={setOpen}
-              setValue={setValue}
-              setItems={setItems}
-              placeholder="Selecciona una opción"
-              style={{
-                width: '100%',
-                height: 50,
-                backgroundColor: errorSemana ? 'yellow' : '#f1f5f9', // Amarillo si hay error
-                borderColor: errorSemana ? '#facc15' : '#cbd5e1', // Amarillo si hay error
-                borderRadius: 8,                
-              }}
-              dropDownContainerStyle={{
-                width: '100%',
-                backgroundColor: 'white',
-              }}
-              textStyle={{
-                fontSize: 16,
-                color: '#374151', // Gray-700 de Tailwind
-              }}
-            />
+  open={open}
+  value={value}
+  items={items}
+  setOpen={setOpen}
+  setValue={setValue}
+  setItems={setItems}
+  placeholder="Selecciona una opción"
+  listMode="MODAL"              // <-- importante: abre en modal (no se corta)
+  modalProps={{
+    animationType: "slide",
+  }}
+  style={{
+    width: '100%',
+    height: 50,
+    backgroundColor: errorSemana ? 'yellow' : '#f1f5f9',
+    borderColor: errorSemana ? '#facc15' : '#cbd5e1',
+    borderRadius: 8,
+  }}
+  dropDownContainerStyle={{
+    backgroundColor: 'white',
+    // puedes conservar zIndex/elevation si quieres
+  }}
+  textStyle={{
+    fontSize: 16,
+    color: '#374151',
+  }}
+/>
           </View>
 
           <View style={styles.containerCombate}>
@@ -2907,5 +2971,30 @@ containerCalendar: {
     position: 'absolute',
     right: 10,
     top: 10,
+  },
+  controlContainer: {
+    marginBottom: 20,
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: "500",
+    marginBottom: 8,
+  },
+  rowControl: {
+    flexDirection: "row",
+    alignItems: "center",
+    width: "70%",
+    justifyContent: "space-between",
+    marginBottom: 15,
+  },
+  
+  dateInput: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    backgroundColor: "#f1f5f9",
+    width: "60%",
   },
 });
