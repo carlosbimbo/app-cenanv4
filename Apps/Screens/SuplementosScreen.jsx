@@ -125,7 +125,7 @@ export default function SuplementosScreen({ route }) {
           })
           */
 
-          const suple = await db.getFirstAsync(`SELECT a.calcu_nrosema,a.calcu_nrodias,c.fecha,a.hemoglo,ifnull(c.totalpic,0) as totalpic FROM T_05_ETAPA_GESTACIONAL a left join (select iduser,fecha,COUNT(*) as totalpic from T_05_REGISTRO_SUPLEMENTOS where iduser = 1 and fecha = DATE('now', '-5 hours') group by iduser,fecha limit 1) c on c.iduser = a.id WHERE a.id = ?`, [user.id]);    
+          const suple = await db.getFirstAsync(`SELECT a.calcu_nrosema,a.calcu_nrodias,c.fecha,a.hemoglo,ifnull(c.totalpic,0) as totalpic FROM T_05_ETAPA_GESTACIONAL a left join (select iduser,fecha,COUNT(DISTINCT (idsuple || iduser)) as totalpic from T_05_REGISTRO_SUPLEMENTOS where iduser = ? and fecha = DATE('now', '-5 hours') group by iduser,fecha limit 1) c on c.iduser = a.id WHERE a.id = ?`, [user.id,user.id]);    
           const levelhemo = parseFloat(suple.hemoglo);
           const totalpictu = parseInt(suple.totalpic);
           const calc_nrosema = parseInt(suple.calcu_nrosema);  
