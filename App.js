@@ -836,15 +836,15 @@ export default function App() {
       await setupEventosNotifications();
 
       // 2️⃣ Registrar tareas BackgroundFetch
-      await registerBackgroundSync();       // Cada 5 min
+      await registerBackgroundSync();       // Cada 3 min
       await registerAlarmBackgroundTask();  // Cada 1 min
       await registerEventosBackgroundTask();  // Cada 1 min
 
       // 3️⃣ Mantener tarea en foreground (opcional)
       const interval = setInterval(async () => {
-        console.log("⏱️ Ejecutando SYNC en foreground cada 5 minutos...");
+        console.log("⏱️ Ejecutando SYNC en foreground cada 3 minutos...");
         await performSync(); // Solo para syncTask
-      }, 300 * 1000);
+      }, 180 * 1000);
 
          // 4️⃣ Ejecutar ALARMA cada 1 minuto en foreground
          const alarmInterval = setInterval(async () => {

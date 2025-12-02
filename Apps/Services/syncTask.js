@@ -5,6 +5,7 @@ import { openDatabaseSync } from "expo-sqlite";
 import { apiFetch } from "./api";
 import { getCurrentNetworkState } from "../Context/NetworkContext";
 import { Platform } from "react-native";
+import * as FileSystem from "expo-file-system";
 //import { waitForUnlock, acquireTaskLock, releaseTaskLock } from "../Utils/TaskCoordinator";
 
 const TASK_NAME = "SYNC_TASK";
@@ -51,6 +52,70 @@ export async function setupNotifications() {
     }
   } catch (error) {
     console.error("❌ Error configurando notificaciones:", error);
+  }
+}
+async function syncFotos(db) {
+  try {
+    
+    const fotos = await db.getAllAsync(
+      "SELECT destinationUri, foto FROM T_05_REGISTRO_SUPLEMENTOS WHERE destinationUri IS NOT NULL"
+    );
+
+    if (fotos.length === 0) {
+      console.log("📁 No hay fotos para sincronizar");
+      return 0;
+    }
+
+    let fotosSync = 0;
+
+    for (const item of fotos) {
+      const localUri = item.destinationUri;
+      const nombreOriginal = item.foto;   
+
+      const fileInfo = await FileSystem.getInfoAsync(localUri);
+      if (!fileInfo.exists) {
+        console.log("⚠️ Foto NO existe físicamente en el dispositivo:", localUri);
+        continue;
+      }
+
+      const formData = new FormData();
+      formData.append("fotos", {
+        uri: localUri,
+        type: "image/jpeg",
+        name: nombreOriginal,  
+      });
+
+      try {
+        const res = await fetch(
+          "https://www.macrocorpsystem.com/cenan2025/upload-fotos",
+          {
+            method: "POST",
+            body: formData, 
+          }
+        );
+
+        const text = await res.text();
+        let resultado;
+
+        try {
+          resultado = JSON.parse(text);
+        } catch (err) {
+          console.log("❌ Servidor devolvió HTML:");
+          console.log(text);
+          throw new Error("Respuesta inválida");
+        }
+
+        console.log("📤 Foto enviada:", resultado);
+        fotosSync++;
+      } catch (err) {
+        console.log("❌ Error enviando foto:", err.message);
+      }
+    }
+
+    return fotosSync;
+  } catch (err) {
+    console.error("❌ Error general en syncFotos:", err);
+    return 0;
   }
 }
 
@@ -172,6 +237,8 @@ export async function performSync() {
       }
     }
 
+    const fotosSynced = await syncFotos(db);
+
     // 🟢 Mostrar notificación de éxito con canal exclusivo
     await Notifications.scheduleNotificationAsync({
       content: {
@@ -220,7 +287,7 @@ export async function registerBackgroundSync() {
     }
 
     await BackgroundFetch.registerTaskAsync(TASK_NAME, {
-      minimumInterval: 300, // cada 8 minutos
+      minimumInterval: 180, // cada 3 minutos
       stopOnTerminate: false,
       startOnBoot: true,
     });
