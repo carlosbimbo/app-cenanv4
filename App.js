@@ -965,7 +965,7 @@ const LoginScreen = ({navigation}) => {
         console.log("📦 Datos recibidos:", JSON.stringify(sync_datagesta, null, 2));
     
         // Pasar el JSON a la función de sincronización
-        await syncCenanData(sync_datagesta.CENAN2025);
+        await syncCenanData(sync_datagesta.CENAN2025,users.username);
         
         await SecureStore.deleteItemAsync('syncfirstdata');
         await SecureStore.setItemAsync('syncfirstdata', 'ok');

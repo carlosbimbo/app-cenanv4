@@ -225,7 +225,8 @@ export default function SuplementosDetail({ route }) {
     const fetchEventsByDate = async () => {
       try {
         const results = await db.getAllAsync(
-          "SELECT fecha, foto,destinationUri FROM T_05_REGISTRO_SUPLEMENTOS WHERE fecha = ? AND iduser = ?",
+          //"SELECT fecha, foto,destinationUri FROM T_05_REGISTRO_SUPLEMENTOS WHERE fecha = ? AND iduser = ?",
+          "SELECT fecha, foto,IFNULL(destinationUri,'file:///data/user/0/com.bimbo.appcenanv4/files/' || foto) as destinationUri FROM T_05_REGISTRO_SUPLEMENTOS WHERE fecha = ? AND iduser = ?",
           [selectedDate, user.id]
         );
         setEventsForSelectedDate(results);

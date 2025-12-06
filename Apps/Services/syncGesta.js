@@ -1,8 +1,9 @@
 import { openDatabaseSync } from "expo-sqlite";
+import { syncDescargarFotos } from "./syncFotosDescarga";
 
-export async function syncCenanData(CENAN2025) {
+export async function syncCenanData(CENAN2025,userapp) {
   const db = openDatabaseSync("auth.db");
-
+ console.log('userapp mira sync fotos : ',userapp);
   try {
     // 🚀 INICIO DE TRANSACCIÓN
     await db.execAsync("BEGIN TRANSACTION;");
@@ -79,6 +80,8 @@ export async function syncCenanData(CENAN2025) {
 
     await db.execAsync("COMMIT;");
     console.log("✅ Sincronización local completada correctamente");
+  
+    await syncDescargarFotos(userapp);
 
   } catch (error) {
     await db.execAsync("ROLLBACK;");
