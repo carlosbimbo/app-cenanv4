@@ -16,6 +16,7 @@
       "supportsTablet": true
     },
     "android": {
+      "googleServicesFile": "./google-services.json",
       "allowBackup": false,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
@@ -27,6 +28,7 @@
         }
       },
       "permissions": [
+        "POST_NOTIFICATIONS",
         "INTERNET",
         "ACCESS_NETWORK_STATE",
         "ACCESS_WIFI_STATE",
@@ -93,7 +95,8 @@
         }
       ],
       "expo-background-task",
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-notifications"
     ]
   }
 }

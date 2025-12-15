@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "493832899278",
+    "project_id": "appcenanv4",
+    "storage_bucket": "appcenanv4.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:493832899278:android:7fa27a189319c63d0cde9f",
+        "android_client_info": {
+          "package_name": "com.bimbo.appcenanv4"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAs2-iEXIr0G04gn3xycJD0Bb1Ry9zVAh8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
