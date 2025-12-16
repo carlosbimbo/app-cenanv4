@@ -30,6 +30,8 @@ import { syncCenanData } from './Apps/Services/syncGesta';
 import { setupAlarmNotifications, registerAlarmBackgroundTask,alarmabbSync  } from "./Apps/Services/alarmaTaskSyncall";
 import { setupEventosNotifications, registerEventosBackgroundTask,eventosSync  } from "./Apps/Services/eventTaskSyncall";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import { setupBackendNotifications } from "./Apps/Components/Notifications/notificationSetup";
+import { registerNotificationListener } from "./Apps/Components/Notifications/notificationListener";
 
 //initialize the database
 const initializeDatabase = async(db) => {
@@ -48,7 +50,8 @@ const initializeDatabase = async(db) => {
                 lati_viv varchar(100),
                 longi_viv varchar(100),
                 altura_viv varchar(100),
-                profileImage varchar(100)
+                profileImage varchar(100),
+                expopushtoken TEXT NULL
             );
         `);
 
@@ -830,6 +833,9 @@ export default function App() {
   useEffect(() => {
     (async () => {
 
+      setupBackendNotifications();
+      registerNotificationListener();
+
       // 1️⃣ Configurar notificaciones de ambos módulos
       await setupNotifications();          // Canal sync
       await setupAlarmNotifications();     // Canal alarmas
@@ -1051,6 +1057,13 @@ const LoginScreen = ({navigation}) => {
               const cleanData = Object.fromEntries(
                 Object.entries(validUser).filter(([_, v]) => v != null && v !== '')
               );
+
+              const { status } = await Notifications.requestPermissionsAsync();
+              cleanData.expopushtoken =
+                status === "granted"
+                  ? (await Notifications.getExpoPushTokenAsync()).data
+                  : null;
+             console.log('expopushtoken mira1 : ',cleanData.expopushtoken);                   
 			  
               const result = await apiFetch('/newuserfirstsign', {
                                 method: 'POST',
@@ -1422,6 +1435,14 @@ const RegisterScreen = ({navigation}) => {
           if (isConnected || isInternetReachable) {
             console.log('Conectado a Internet :');                     
                 try {
+
+                  const { status } = await Notifications.requestPermissionsAsync();
+                  cleanData.expopushtoken =
+                    status === "granted"
+                      ? (await Notifications.getExpoPushTokenAsync()).data
+                      : null;
+                 console.log('expopushtoken mira2 : ',cleanData.expopushtoken);
+
                   const result = await apiFetch('/newuserfirstsign', {
                     method: 'POST',
                     body: JSON.stringify(cleanData),
