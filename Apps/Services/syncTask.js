@@ -154,6 +154,20 @@ export async function performSync() {
     let agendaSynced = 0;
     let diasgesSynced = 0;
 
+    //udp tokenapp User
+    const viduser = await SecureStore.getItemAsync("userlogintask");
+    const exisUser = await db.getFirstAsync('SELECT * FROM users WHERE id = ?', [viduser]);
+    if (exisUser) {          
+    const { status } = await Notifications.requestPermissionsAsync();
+    const udpusertoken =
+      status === "granted"
+        ? (await Notifications.getExpoPushTokenAsync()).data
+        : null;
+      console.log("udpusertoken de syncTask send postgres:", udpusertoken);    
+      const udpusertok =   await db.runAsync('UPDATE users SET expopushtoken = ? WHERE id = ?', [udpusertoken,viduser]);                  
+    }
+    //fin udp tokenapp User
+
     if (users.length > 0) {
       try {
         const sync_users = await apiFetch(
