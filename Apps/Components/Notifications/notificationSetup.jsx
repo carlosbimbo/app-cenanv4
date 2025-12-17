@@ -10,9 +10,9 @@ export async function setupBackendNotifications() {
   if (Platform.OS === "android") {
     // Definimos los audios que configuraste en app.json
     const alarmas = [
-      { id: "alarm_channel_alerta1", sound: "alerta1.mp3", name: "Alerta Nivel 1" },
-      { id: "alarm_channel_alerta2", sound: "alerta2.mp3", name: "Alerta Nivel 2" },
-      { id: "alarm_channel_alerta3", sound: "alerta3.mp3", name: "Alerta Nivel 3" },
+      { id: "v2_alarm_channel_alerta1", sound: "alerta1.mp3", name: "Alerta Nivel 1" },
+      { id: "v2_alarm_channel_alerta2", sound: "alerta2.mp3", name: "Alerta Nivel 2" },
+      { id: "v2_alarm_channel_alerta3", sound: "alerta3.mp3", name: "Alerta Nivel 3" },
     ];
 
     for (const alarma of alarmas) {
