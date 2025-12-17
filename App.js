@@ -31,7 +31,6 @@ import { setupAlarmNotifications, registerAlarmBackgroundTask,alarmabbSync  } fr
 import { setupEventosNotifications, registerEventosBackgroundTask,eventosSync  } from "./Apps/Services/eventTaskSyncall";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { setupBackendNotifications } from "./Apps/Components/Notifications/notificationSetup";
-import { registerNotificationListener } from "./Apps/Components/Notifications/notificationListener";
 
 //initialize the database
 const initializeDatabase = async(db) => {
@@ -834,7 +833,6 @@ export default function App() {
     (async () => {
 
       setupBackendNotifications();
-      registerNotificationListener();
 
       // 1️⃣ Configurar notificaciones de ambos módulos
       await setupNotifications();          // Canal sync

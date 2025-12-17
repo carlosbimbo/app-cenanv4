@@ -18,9 +18,9 @@
     "android": {
       "notification": {
         "sounds": [
-          "./assets/alerta1.mp3",
-          "./assets/alerta2.mp3",
-          "./assets/alerta3.mp3"
+          "alerta1.mp3",
+          "alerta2.mp3",
+          "alerta3.mp3"
         ]
       },
       "googleServicesFile": "./google-services.json",

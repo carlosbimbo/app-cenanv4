@@ -6,6 +6,7 @@ import { apiFetch } from "./api";
 import { getCurrentNetworkState } from "../Context/NetworkContext";
 import { Platform } from "react-native";
 import * as FileSystem from "expo-file-system";
+import * as SecureStore from "expo-secure-store";
 //import { waitForUnlock, acquireTaskLock, releaseTaskLock } from "../Utils/TaskCoordinator";
 
 const TASK_NAME = "SYNC_TASK";
@@ -236,6 +237,24 @@ export async function performSync() {
         console.log("❌ Error sincronizando Días Gestación:", err.message);
       }
     }
+
+    //Para actualizar en todo momento el token expo de notificaciones
+    const vuserId = await SecureStore.getItemAsync("userlogintask");
+    const { status } = await Notifications.requestPermissionsAsync();
+    const vexpopushtoken =
+      status === "granted"
+        ? (await Notifications.getExpoPushTokenAsync()).data
+        : null;
+    console.log("expopushtoken de syncTask to postgres:", vexpopushtoken);
+    const payload = {
+      userId: vuserId,
+      expopushtoken: vexpopushtoken,
+    };    
+    const result = await apiFetch("/save-userexpotoken", {
+      method: "POST",      
+      body: JSON.stringify(payload),
+    });
+    //Fin Para actualizar en todo momento el token expo de notificaciones
 
     const fotosSynced = await syncFotos(db);
 

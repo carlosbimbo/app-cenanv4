@@ -1,6 +1,5 @@
 import * as Notifications from "expo-notifications";
-import { Platform, Vibration } from "react-native";
-import { Audio } from "expo-av";
+import { Platform } from "react-native";
 
 const CHANNEL_ID = "sync_alarmasuplement_channel";
 
@@ -9,21 +8,20 @@ export async function setupBackendNotifications() {
   if (status !== "granted") return;
 
   if (Platform.OS === "android") {
-    // Canal base (fallback)
     await Notifications.setNotificationChannelAsync(CHANNEL_ID, {
       name: "Alarmas Suplementos Bebé",
       importance: Notifications.AndroidImportance.MAX,
       vibrationPattern: [500, 500, 500, 500, 500],
       enableVibrate: true,
-      sound: "default"
+      sound: "alerta1", // ⚠️ DEFAULT, luego se sobrescribe
+      lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
     });
   }
 
-  // Cómo se muestran las notificaciones
   Notifications.setNotificationHandler({
     handleNotification: async () => ({
       shouldShowAlert: true,
-      shouldPlaySound: false, // lo manejamos manualmente
+      shouldPlaySound: true, // 🔥 DEJA QUE ANDROID LO HAGA
       shouldSetBadge: false,
     }),
   });
