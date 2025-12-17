@@ -16,13 +16,6 @@
       "supportsTablet": true
     },
     "android": {
-      "notification": {
-        "sounds": [
-          "alerta1.mp3",
-          "alerta2.mp3",
-          "alerta3.mp3"
-        ]
-      },
       "googleServicesFile": "./google-services.json",
       "allowBackup": false,
       "adaptiveIcon": {
@@ -103,7 +96,19 @@
       ],
       "expo-background-task",
       "expo-secure-store",
-      "expo-notifications"
+      "expo-notifications",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/adaptive-icon.png",
+          "color": "#ffffff",
+          "sounds": [
+            "./assets/alerta1.mp3",
+            "./assets/alerta2.mp3",
+            "./assets/alerta3.mp3"
+          ]
+        }
+      ]
     ]
   }
 }
