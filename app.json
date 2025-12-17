@@ -95,8 +95,7 @@
         }
       ],
       "expo-background-task",
-      "expo-secure-store",
-      "expo-notifications",
+      "expo-secure-store",      
       [
         "expo-notifications",
         {
