@@ -9,20 +9,20 @@ export async function setupBackendNotifications() {
 
   if (Platform.OS === "android") {
     // Definimos los audios que configuraste en app.json
-    const alarmas = [
-      { id: "v2_alarm_channel_alerta1", sound: "alerta1.mp3", name: "Alerta Nivel 1" },
-      { id: "v2_alarm_channel_alerta2", sound: "alerta2.mp3", name: "Alerta Nivel 2" },
-      { id: "v2_alarm_channel_alerta3", sound: "alerta3.mp3", name: "Alerta Nivel 3" },
+    const canales = [
+      { id: "v5_alerta_uno", sound: "alerta_uno.wav", name: "Alerta Médica 1 v5" },
+      { id: "v5_alerta_dos", sound: "alerta_dos.wav", name: "Alerta Médica 2 v5" },
+      { id: "v5_alerta_tres", sound: "alerta_tres.wav", name: "Alerta Médica 3 v5" },
     ];
 
-    for (const alarma of alarmas) {
-      await Notifications.setNotificationChannelAsync(alarma.id, {
-        name: alarma.name,
+    for (const canal of canales) {
+      await Notifications.setNotificationChannelAsync(canal.id, {
+        name: canal.name,
         importance: Notifications.AndroidImportance.MAX,
         vibrationPattern: [0, 250, 250, 250],
         lightColor: "#FF231F7C",
         // Aquí vinculamos el ID del canal con el archivo físico
-        sound: alarma.sound, 
+        sound: canal.sound, 
       });
     }
   }

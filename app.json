@@ -105,7 +105,10 @@
           "sounds": [
             "./assets/alerta1.mp3",
             "./assets/alerta2.mp3",
-            "./assets/alerta3.mp3"
+            "./assets/alerta3.mp3",
+            "./assets/alerta_uno.wav",
+            "./assets/alerta_dos.wav",
+            "./assets/alerta_tres.wav"
           ]
         }
       ]
